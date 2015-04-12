@@ -10,6 +10,7 @@
 name=Line direction histogram
 qgisMinimumVersion=2.0
 description=Create histogram of line directions
+about=Visualises the distribution of line segment directions (weighted using the line segment length).  Can save the histogram to a CSV file.
 version=1.0
 author=Håvard Tveite, NMBU
 email=havard.tveite@nmbu.no
@@ -18,10 +19,10 @@ email=havard.tveite@nmbu.no
 
 # Optional items:
 # Uncomment the following line and add your changelog:
-changelog=1.0.0
+changelog=1.0
     - First public version
 # Tags are comma separated with spaces allowed
-tags=direction,line,histogram,line segment
+tags=direction,line,histogram,line segment,orientation
 #homepage=https://plugins.qgis.org/plugins/LineDirectionHistogram/
 homepage=http://arken.umb.no/~havatv/gis/qgisplugins/LineDirectionHistogram/
 tracker=https://github.com/havatv/qgislinedirectionhistogramplugin/issues
