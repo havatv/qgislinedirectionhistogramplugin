@@ -30,6 +30,7 @@ from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
 from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
 from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
+from PyQt4.QtGui import QGraphicsView
 from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 #from qgis.gui import QgsMessageBar
@@ -45,10 +46,6 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 # the 12 o'clock position (north).
 # QT angles are measured counter clockwise from the 3 o'clock
 # position.
-#
-# The histogram size will change when the plugin is resized.
-# When the histogram size is reduced, there are som disturbances
-# the first time a new histogram is created.
 class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def __init__(self, iface, parent=None):
@@ -86,15 +83,17 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         browseButton.clicked.connect(self.browse)
         dirNeutralCBCh = self.DirectionNeutralCheckBox.stateChanged
         dirNeutralCBCh.connect(self.updateBins)
-
+        noWeightingCBCh = self.noWeightingCheckBox.stateChanged
+        noWeightingCBCh.connect(self.noWeighting)
         binsSBCh = self.binsSpinBox.valueChanged[str]
         binsSBCh.connect(self.binsChanged)
         offsetAngleSBCh = self.offsetAngleSpinBox.valueChanged[str]
         offsetAngleSBCh.connect(self.updateBins)
-        self.iface.legendInterface().itemAdded.connect(
-            self.layerlistchanged)
-        self.iface.legendInterface().itemRemoved.connect(
-            self.layerlistchanged)
+
+        #self.iface.legendInterface().itemAdded.connect(
+        #    self.layerlistchanged)
+        #self.iface.legendInterface().itemRemoved.connect(
+        #    self.layerlistchanged)
         QObject.disconnect(self.button_box, SIGNAL("rejected()"),
                            self.reject)
 
@@ -105,9 +104,13 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.numberofrings = 10
         self.bins = 8
         self.binsSpinBox.setValue(self.bins)
+        # Direction neutrality is the default
         self.directionneutral = True
         self.DirectionNeutralCheckBox.setChecked(self.directionneutral)
-
+        # Weighting by line segment length is the default
+        self.noweighting = False
+        self.noWeightingCheckBox.setChecked(self.noweighting)
+        self.selectedFeaturesCheckBox.setChecked(True)
         self.setupScene = QGraphicsScene(self)
         self.setupGraphicsView.setScene(self.setupScene)
         self.scene = QGraphicsScene(self)
@@ -117,9 +120,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             maxoffsetangle = int(180 / self.bins)
         self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
         self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
-
-        # The following is premature, but solved by a hack
-        self.updateBins()
+        self.result = None
 
     def startWorker(self):
         #self.showInfo('Ready to start worker')
@@ -137,9 +138,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.directionneutral = True
         self.offsetangle = self.offsetAngleSpinBox.value()
         # create a new worker instance
-        #self.showInfo('Initialising worker')
         worker = Worker(inputlayer, self.bins, self.directionneutral,
-                        self.offsetangle)
+                        self.offsetangle,
+                        self.selectedFeaturesCheckBox.isChecked())
         ## configure the QgsMessageBar
         #msgBar = self.iface.messageBar().createMessage(self.tr('Joining'), '')
         #self.aprogressBar = QProgressBar()
@@ -163,13 +164,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         worker.progress.connect(self.progressBar.setValue)
         #worker.progress.connect(self.aprogressBar.setValue)
         thread.started.connect(worker.run)
-        #self.showInfo('Starting thread')
         thread.start()
         self.thread = thread
         self.worker = worker
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
         self.button_box.button(QDialogButtonBox.Close).setEnabled(False)
-        #self.showInfo('startworker finished')
 
     def workerFinished(self, ok, ret):
         """Handles the output from the worker and cleans up after the
@@ -179,116 +178,39 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.thread.quit()
         self.thread.wait()
         self.thread.deleteLater()
-        # remove widget from message bar (pop)
+        # remove widget from the message bar (pop)
         #self.iface.messageBar().popWidget(self.messageBar)
         if ok and ret is not None:
+            self.result = ret
             # report the result
+            # As a CSV file:
             if self.outputfilename != "":
-                with open(self.outputfilename, 'wb') as csvfile:
-                    csvwriter = csv.writer(csvfile, delimiter=';',
-                                quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    for i in range(len(ret)):
-                        if self.directionneutral:
-                            csvwriter.writerow([i * 180.0 / self.bins,
-                                               ret[i]])
-                            #QgsMessageLog.logMessage(str(i*180.0/self.bins)
-                            #                         + ';' + str(ret[i]),
-                            #                 self.LINEDIRECTIONHISTOGRAM,
-                            #                 QgsMessageLog.INFO)
-                        else:
-                            csvwriter.writerow([-180.0 + i * 360.0 /
-                                               self.bins, ret[i]])
-                            #QgsMessageLog.logMessage(str(-180.0 + i * 360.0
-                            #                             / self.bins) +
-                            #                         ';' + str(ret[i]),
-                            #                 self.LINEDIRECTIONHISTOGRAM,
-                            #                 QgsMessageLog.INFO)
-                with open(self.outputfilename + 't', 'wb') as csvtfile:
-                    csvtfile.write('"Real","Real"')
-            # Try to draw on a QGraphicsView
-            # Find the maximum direction value for scaling
-            maxvalue = 0.0
-            for i in range(len(ret)):
-                if ret[i] > maxvalue:
-                    maxvalue = ret[i]
-            self.scene.clear()
-            viewprect = QRectF(self.graphicsView.viewport().rect())
-            self.graphicsView.setSceneRect(viewprect)
-            bottom = self.graphicsView.sceneRect().bottom()
-            top = self.graphicsView.sceneRect().top()
-            left = self.graphicsView.sceneRect().left()
-            right = self.graphicsView.sceneRect().right()
-            #QgsMessageLog.logMessage("bottom: " + str(bottom) +
-            #                         " top: " + str(top) + " left: "
-            #                         + str(left) + " right: " + str(right),
-            #                         self.LINEDIRECTIONHISTOGRAM,
-            #                         QgsMessageLog.INFO)
-            height = bottom - top
-            width = right - left
-            size = width
-            if width > height:
-                size = height
-            padding = 3
-            maxlength = size / 2.0 - padding * 2
-            center = QPoint(left + width / 2.0, top + height / 2.0)
-            frompt = center
-            start = QPointF(self.graphicsView.mapToScene(frompt))
-            # Create some concentric rings as background:
-            for i in range(self.numberofrings):
-                step = maxlength / self.numberofrings
-                radius = step * (i + 1)
-                circle = QGraphicsEllipseItem(center.x() - radius,
-                                              center.y() - radius,
-                                              radius * 2.0,
-                                              radius * 2.0)
-                circle.setPen(QPen(QColor(153, 153, 255)))
-                self.scene.addItem(circle)
-            for i in range(self.bins):
-                linelength = maxlength * ret[i] / maxvalue
-                angle = 90 - i * 360.0 / self.bins - self.offsetangle
-                if self.directionneutral:
-                    angle = 90.0 - i * 180.0 / self.bins - self.offsetangle
-                #start = QPointF(self.graphicsView.mapToScene(frompt))
-                directedline = QLineF.fromPolar(linelength, angle)
-                topt = center + QPoint(directedline.x2(), directedline.y2())
-                end = QPointF(self.graphicsView.mapToScene(topt))
-                if self.directionneutral:
-                    otherend = center - QPoint(directedline.x2(),
-                                               directedline.y2())
-                    self.scene.addItem(QGraphicsLineItem(QLineF(otherend,
-                                                                end)))
-                    sector = QGraphicsEllipseItem(center.x() - linelength,
-                                                  center.y() - linelength,
-                                                  linelength * 2.0,
-                                                  linelength * 2.0)
-                    sector.setStartAngle(int(16 * (90.0 - i * 180.0 /
-                                                   self.bins -
-                                                   self.offsetangle)))
-                    sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
-                    sector.setBrush(QBrush(QColor(240, 240, 240)))
-                    self.scene.addItem(sector)
-                    sector = QGraphicsEllipseItem(center.x() - linelength,
-                                                  center.y() - linelength,
-                                                  linelength * 2.0,
-                                                  linelength * 2.0)
-                    sector.setStartAngle(int(16 * (270.0 - i * 180.0
-                                                   / self.bins -
-                                                   self.offsetangle)))
-                    sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
-                    sector.setBrush(QBrush(QColor(240, 240, 240)))
-                    self.scene.addItem(sector)
-                else:
-                    self.scene.addItem(QGraphicsLineItem(QLineF(start, end)))
-                    sector = QGraphicsEllipseItem(center.x() - linelength,
-                                                  center.y() - linelength,
-                                                  linelength * 2.0,
-                                                  linelength * 2.0)
-                    sector.setStartAngle(int(16 * (90.0 - i * 360.0 /
-                                                   self.bins -
-                                                   self.offsetangle)))
-                    sector.setSpanAngle(int(16 * (-360.0 / self.bins)))
-                    sector.setBrush(QBrush(QColor(240, 240, 240)))
-                    self.scene.addItem(sector)
+                try:
+                    with open(self.outputfilename, 'wb') as csvfile:
+                        csvwriter = csv.writer(csvfile, delimiter=';',
+                                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                        csvwriter.writerow(["StartAngle", "EndAngle",
+                                            "Length", "Number"])
+                        for i in range(len(ret)):
+                            if self.directionneutral:
+                                angle = (i * 180.0 / self.bins +
+                                                self.offsetangle)
+                                csvwriter.writerow([angle,
+                                                   angle + 180.0 / self.bins,
+                                                   ret[i][0], ret[i][1]])
+                            else:
+                                angle = (i * 360.0 / self.bins +
+                                                         self.offsetangle)
+                                csvwriter.writerow([angle,
+                                               angle + 360.0 / self.bins,
+                                               ret[i][0], ret[i][1]])
+                    with open(self.outputfilename + 't', 'wb') as csvtfile:
+                        csvtfile.write('"Real","Real","Real","Integer"')
+                except IOError, e:
+                    self.showInfo("Trouble writing the CSV file: " + str(e))
+
+            # Draw the histogram
+            self.drawHistogram()
         else:
             # notify the user that something went wrong
             if not ok:
@@ -349,9 +271,100 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         else:
             self.updateBins()
 
+    def noWeighting(self):
+        if self.result is not None:
+            self.drawHistogram()
+
+    def drawHistogram(self):
+        if self.result is None:
+            return
+        #self.showInfo(str(self.result))
+        # Check which element should be used for the histogram
+        element = 0
+        if self.noWeightingCheckBox.isChecked():
+            element = 1
+        # Find the maximum direction value for scaling
+        maxvalue = 0.0
+        for i in range(len(self.result)):
+            if self.result[i][element] > maxvalue:
+                maxvalue = self.result[i][element]
+        self.scene.clear()
+        viewprect = QRectF(self.graphicsView.viewport().rect())
+        self.graphicsView.setSceneRect(viewprect)
+        bottom = self.graphicsView.sceneRect().bottom()
+        top = self.graphicsView.sceneRect().top()
+        left = self.graphicsView.sceneRect().left()
+        right = self.graphicsView.sceneRect().right()
+        height = bottom - top
+        width = right - left
+        size = width
+        if width > height:
+            size = height
+        padding = 3
+        maxlength = size / 2.0 - padding * 2
+        center = QPoint(left + width / 2.0, top + height / 2.0)
+        start = QPointF(self.graphicsView.mapToScene(center))
+        # Create some concentric rings as background:
+        for i in range(self.numberofrings):
+                step = maxlength / self.numberofrings
+                radius = step * (i + 1)
+                circle = QGraphicsEllipseItem(start.x() - radius,
+                                              start.y() - radius,
+                                              radius * 2.0,
+                                              radius * 2.0)
+                circle.setPen(QPen(QColor(153, 153, 255)))
+                self.scene.addItem(circle)
+        for i in range(self.bins):
+                linelength = maxlength * self.result[i][element] / maxvalue
+                angle = 90 - i * 360.0 / self.bins - self.offsetangle
+                if self.directionneutral:
+                    angle = 90.0 - i * 180.0 / self.bins - self.offsetangle
+                directedline = QLineF.fromPolar(linelength, angle)
+                topt = center + QPoint(directedline.x2(), directedline.y2())
+                end = QPointF(self.graphicsView.mapToScene(topt))
+                if self.directionneutral:
+                    otherendpt = center - QPoint(directedline.x2(),
+                                               directedline.y2())
+                    scotendpt = self.graphicsView.mapToScene(otherendpt)
+                    otherend = QPointF(scotendpt)
+                    self.scene.addItem(QGraphicsLineItem(QLineF(otherend,
+                                                                end)))
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                  start.y() - linelength,
+                                                  linelength * 2.0,
+                                                  linelength * 2.0)
+                    sector.setStartAngle(int(16 * (90.0 - i * 180.0 /
+                                                   self.bins -
+                                                   self.offsetangle)))
+                    sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
+                    sector.setBrush(QBrush(QColor(240, 240, 240)))
+                    self.scene.addItem(sector)
+                    # The sector in the oposite direction
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                  start.y() - linelength,
+                                                  linelength * 2.0,
+                                                  linelength * 2.0)
+                    sector.setStartAngle(int(16 * (270.0 - i * 180.0
+                                                   / self.bins -
+                                                   self.offsetangle)))
+                    sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
+                    sector.setBrush(QBrush(QColor(240, 240, 240)))
+                    self.scene.addItem(sector)
+                else:
+                    self.scene.addItem(QGraphicsLineItem(QLineF(start, end)))
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                  start.y() - linelength,
+                                                  linelength * 2.0,
+                                                  linelength * 2.0)
+                    sector.setStartAngle(int(16 * (90.0 - i * 360.0 /
+                                                   self.bins -
+                                                   self.offsetangle)))
+                    sector.setSpanAngle(int(16 * (-360.0 / self.bins)))
+                    sector.setBrush(QBrush(QColor(240, 240, 240)))
+                    self.scene.addItem(sector)
+
+    # Update the visualisation of the bin structure
     def updateBins(self):
-        #QgsMessageLog.logMessage('Number of bins changed',
-        #          elf.LINEDIRECTIONHISTOGRAM, QgsMessageLog.INFO)
         self.directionneutral = False
         if self.DirectionNeutralCheckBox.isChecked():
             self.directionneutral = True
@@ -365,10 +378,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         top = self.setupGraphicsView.sceneRect().top()
         left = self.setupGraphicsView.sceneRect().left()
         right = self.setupGraphicsView.sceneRect().right()
-        #QgsMessageLog.logMessage('top: ' + str(top) + ' bottom: ' +
-        #                         str(bottom) + ' left: ' + str(left)
-        #                         + ' right: ' + str(right),
-        #             self.LINEDIRECTIONHISTOGRAM, QgsMessageLog.INFO)
         height = bottom - top
         width = right - left
         size = width
@@ -377,18 +386,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         padding = 3.0
         maxlength = size / 2.0 - padding
         center = QPoint(left + width / 2.0, top + height / 2.0)
-        # Hack to enable a sensible drawing on the canvas before init
-        # has finished.
-        if maxlength < 50.0:
-            maxlength = 73.0 - padding
-            center = QPoint(left + maxlength + padding,
-                            top + maxlength + padding)
         start = QPointF(self.setupGraphicsView.mapToScene(center))
-        #QgsMessageLog.logMessage('scene x: ' + str(start.x()) +
-        #                         ' scene y: ' + str(start.y()) +
-        #                         ' map x: ' + str(center.x()) +
-        #                         ' map y: ' + str(center.y()),
-        #          self.LINEDIRECTIONHISTOGRAM, QgsMessageLog.INFO)
         # Create some concentric rings:
         setuprings = self.numberofrings // 2
         for i in range(setuprings):
@@ -418,23 +416,23 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             else:
                 self.setupScene.addItem(QGraphicsLineItem(QLineF(start, end)))
 
-    def layerlistchanged(self):
-        self.layerlistchanging = True
-        # Repopulate the input and join layer combo boxes
-        # Save the currently selected input layer
-        inputlayerid = self.inputlayerid
-        self.InputLayer.clear()
-        # We are only interested in line and polygon layers
-        for alayer in self.iface.legendInterface().layers():
-            if alayer.type() == QgsMapLayer.VectorLayer:
-                if (alayer.geometryType() == QGis.Line or
-                    alayer.geometryType() == QGis.Polygon):
-                    self.InputLayer.addItem(alayer.name(), alayer.id())
-        # Set the previous selection
-        for i in range(self.InputLayer.count()):
-            if self.InputLayer.itemData(i) == inputlayerid:
-                self.InputLayer.setCurrentIndex(i)
-        self.layerlistchanging = False
+    #def layerlistchanged(self):
+    #    self.layerlistchanging = True
+    #    # Repopulate the input and join layer combo boxes
+    #    # Save the currently selected input layer
+    #    inputlayerid = self.inputlayerid
+    #    self.InputLayer.clear()
+    #    # We are only interested in line and polygon layers
+    #    for alayer in self.iface.legendInterface().layers():
+    #        if alayer.type() == QgsMapLayer.VectorLayer:
+    #            if (alayer.geometryType() == QGis.Line or
+    #                alayer.geometryType() == QGis.Polygon):
+    #                self.InputLayer.addItem(alayer.name(), alayer.id())
+    #    # Set the previous selection
+    #    for i in range(self.InputLayer.count()):
+    #        if self.InputLayer.itemData(i) == inputlayerid:
+    #            self.InputLayer.setCurrentIndex(i)
+    #    self.layerlistchanging = False
 
     def showError(self, text):
         """Show an error."""
@@ -476,6 +474,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # exit the dialog
         QDialog.reject(self)
 
+    # Translation
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -486,6 +485,16 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         :rtype: QString
         """
         return QCoreApplication.translate('LineDirectionDialog', message)
+
+    # Overriding
+    def resizeEvent(self, event):
+        #self.showInfo("resizeEvent")
+        self.drawHistogram()
+
+    # Overriding
+    def showEvent(self, event):
+        #self.showInfo("showEvent")
+        self.updateBins()
 
 
 def saveDialog(parent):

@@ -7,8 +7,6 @@
 The QGIS Line Direction Histogram Plugin
 *******************************************
 
-Contents:
-
 .. toctree::
    :maxdepth: 2
 
@@ -18,12 +16,16 @@ Functionality
 
 - The QGIS Line Direction Histogram Plugin can be used to investigate
   the distribution of the directions of line segments of a line or
-  polygon vector dataset. 
+  polygon vector dataset.
 
 - The accumulated lengths of the line segments for each direction bin
-  determines the shape of the histogram.
+  determines the shape of the histogram.  Alternatively, the number
+  of segments can be used (no weighting on line segment length).
 
-- Line and Polygon vector layers are supported.
+- Line and Polygon vector layers are supported, including
+  multigeometries.
+
+- Feature selections are supported.
 
 - The number of direction bins for the histogram can be specified.
 
@@ -40,27 +42,43 @@ Functionality
   
 - The histogram can be saved to a CSV file.
 
+- If the plugin window is resized, the direction histogram is also
+  resized.
+  
 
 The displayed histogram
 ========================
 
-The diplayed histogram is normalised, so that the maximum value of
+The displayed histogram is normalised, so that the maximum value of
 the direction bins will result in a sector with a maximum length, and
 the lengths of the sectors of the rest of the bins are scaled
 proportionally.
 
+
 The saved histogram
 ====================
 
-The saved histogram is a CSV file with two columns.
-The first column contains the start angle of the direction bin, while
-the second column contains the accumulated lengths of the line
-segments that fall within that bin.
-"." is used as decimal separator in the CSV file.
+The saved histogram is a CSV file with four columns:
+
+- The first column ("StartAngle") contains the start angle of the
+  direction bin.
+- The second column ("EndAngle") contains the end angle of the
+  direction bin.
+- The third column ("Length") contains the accumulated lengths of
+  the line segments that fall within the bin.
+- The fourth column ("Number") contains the number of line segments
+  that fall within the bin.
+"." is used as the decimal separator in the CSV file.
+
+The CSV file is accompanied by a CSVT file that describes the
+data types of the CSV file columns.
 
 
 Options
 =============
+
+- The user can specify if only selected features are to be used
+  (but if no features are selected, all features will be used)
 
 - The user can specify the number of direction bins.
 
@@ -72,6 +90,8 @@ Options
 
 - The user can specify an output CSV file for the histogram.
 
+- The user can specify if line segment length shall be used for
+  weighting the bins (this is the default).
 
 Implementation
 ================
@@ -88,7 +108,15 @@ is used for the calculations.
 
 Versions
 ===============
-The current version is 1.0.0
+The current version is 1.1.0
+
+- 1.1.0:
+    - Selected features option introduced
+    - Unweighted option introduced
+    - Multigeometry support
+    - CSV file header row added
+    - CSV angle offset bug fixed
+    - User interface fixes and updates
 
 - 1.0.0: First official version.
 
@@ -96,14 +124,14 @@ The current version is 1.0.0
 Links
 =======
 
-`linedirectionhistogram Plugin`_
+`LineDirectionHistogram Plugin`_
 
-`linedirectionhistogram code repository`_
+`LineDirectionHistogram code repository`_
 
-`linedirectionhistogram issues`_
+`LineDirectionHistogram issues`_
 
 
-.. _linedirectionhistogram code repository: https://github.com/havatv/qgislinedirectionhistogramplugin.git
-.. _linedirectionhistogram Plugin: https://plugins.qgis.org/plugins/LineDirectionHistogram/
-.. _linedirectionhistogram issues: https://github.com/havatv/qgislinedirectionhistogramplugin/issues
+.. _LineDirectionHistogram code repository: https://github.com/havatv/qgislinedirectionhistogramplugin.git
+.. _LineDirectionHistogram Plugin: https://plugins.qgis.org/plugins/LineDirectionHistogram/
+.. _LineDirectionHistogram issues: https://github.com/havatv/qgislinedirectionhistogramplugin/issues
 .. |N2| replace:: N\ :sup:`2`

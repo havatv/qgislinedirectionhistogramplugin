@@ -55,7 +55,6 @@ class linedirectionhistogram:
                 pluginPath,
                 'i18n',
                 '{}.qm'.format(locale))
-                #'linedirectionhistogram_{}.qm'.format(locale))
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
@@ -118,9 +117,9 @@ class linedirectionhistogram:
 
     def run(self):
         # Do some initialisations
-        # Progressbar
+        # The progressbar
         self.dlg.progressBar.setValue(0.0)
-        # Input layer
+        # The input layer
         self.dlg.InputLayer.clear()
         for alayer in self.iface.legendInterface().layers():
             # Look for vector line (and polygon) layers
@@ -131,11 +130,3 @@ class linedirectionhistogram:
         """Run method that performs all the real work"""
         # show the dialog
         self.dlg.show()
-        # Run the dialog event loop
-        #self.dlg.exec_()
-        #result = self.dlg.exec_()
-        ## See if OK was pressed
-        #if result:
-        #    # Do something useful here - delete the line containing pass and
-        #    # substitute with your code.
-        #    pass
