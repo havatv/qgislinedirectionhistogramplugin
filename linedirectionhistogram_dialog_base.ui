@@ -60,7 +60,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QCheckBox" name="DirectionNeutralCheckBox">
+          <widget class="QCheckBox" name="directionNeutralCheckBox">
            <property name="enabled">
             <bool>true</bool>
            </property>
@@ -337,7 +337,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGraphicsView" name="graphicsView">
+    <widget class="QGraphicsView" name="histogramGraphicsView">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>

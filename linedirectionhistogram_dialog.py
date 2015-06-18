@@ -22,11 +22,11 @@
 """
 
 # User interface input components:
-#   graphicsView: The GraphicsView that contains the histogram
+#   histogramGraphicsView: The GraphicsView that contains the histogram
 #   setupGraphicsView: The GraphicsView that shows the setup (bins and angles)
 #   binsSpinBox
 #   offsetAngleSpinBox
-#   DirectionNeutralCheckBox
+#   directionNeutralCheckBox
 #   selectedFeaturesCheckBox
 #   noWeightingCheckBox
 #   inputLayer
@@ -94,7 +94,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         cancelButton.clicked.connect(self.killWorker)
         closeButton.clicked.connect(self.reject)
         browseButton.clicked.connect(self.browse)
-        dirNeutralCBCh = self.DirectionNeutralCheckBox.stateChanged
+        dirNeutralCBCh = self.directionNeutralCheckBox.stateChanged
         dirNeutralCBCh.connect(self.updateBins)
         noWeightingCBCh = self.noWeightingCheckBox.stateChanged
         noWeightingCBCh.connect(self.noWeighting)
@@ -118,7 +118,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.binsSpinBox.setValue(self.bins)
         # Direction neutrality is the default
         self.directionneutral = True
-        self.DirectionNeutralCheckBox.setChecked(self.directionneutral)
+        self.directionNeutralCheckBox.setChecked(self.directionneutral)
         # Weighting by line segment length is the default
         self.noweighting = False
         self.noWeightingCheckBox.setChecked(self.noweighting)
@@ -127,7 +127,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.setupScene = QGraphicsScene(self)
         self.setupGraphicsView.setScene(self.setupScene)
         self.scene = QGraphicsScene(self)
-        self.graphicsView.setScene(self.scene)
+        self.histogramGraphicsView.setScene(self.scene)
         maxoffsetangle = int(360 / self.bins)
         if self.directionneutral:
             maxoffsetangle = int(maxoffsetangle / 2)
@@ -151,7 +151,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.bins = self.binsSpinBox.value()
         self.outputfilename = self.outputFile.text()
         self.directionneutral = False
-        if self.DirectionNeutralCheckBox.isChecked():
+        if self.directionNeutralCheckBox.isChecked():
             self.directionneutral = True
         self.offsetangle = self.offsetAngleSpinBox.value()
         # create a new worker instance
@@ -294,12 +294,12 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.scene.clear()
         if maxvalue == 0:
             return
-        viewprect = QRectF(self.graphicsView.viewport().rect())
-        self.graphicsView.setSceneRect(viewprect)
-        bottom = self.graphicsView.sceneRect().bottom()
-        top = self.graphicsView.sceneRect().top()
-        left = self.graphicsView.sceneRect().left()
-        right = self.graphicsView.sceneRect().right()
+        viewprect = QRectF(self.histogramGraphicsView.viewport().rect())
+        self.histogramGraphicsView.setSceneRect(viewprect)
+        bottom = self.histogramGraphicsView.sceneRect().bottom()
+        top = self.histogramGraphicsView.sceneRect().top()
+        left = self.histogramGraphicsView.sceneRect().left()
+        right = self.histogramGraphicsView.sceneRect().right()
         height = bottom - top
         width = right - left
         size = width
@@ -308,7 +308,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         padding = 3
         maxlength = size / 2.0 - padding * 2
         center = QPoint(left + width / 2.0, top + height / 2.0)
-        start = QPointF(self.graphicsView.mapToScene(center))
+        start = QPointF(self.histogramGraphicsView.mapToScene(center))
         # Create some concentric rings as background:
         for i in range(self.NUMBEROFRINGS):
                 step = maxlength / self.NUMBEROFRINGS
@@ -326,11 +326,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     angle = 90.0 - i * 180.0 / self.bins - self.offsetangle
                 directedline = QLineF.fromPolar(linelength, angle)
                 topt = center + QPoint(directedline.x2(), directedline.y2())
-                end = QPointF(self.graphicsView.mapToScene(topt))
+                end = QPointF(self.histogramGraphicsView.mapToScene(topt))
                 if self.directionneutral:
                     otherendpt = center - QPoint(directedline.x2(),
                                                directedline.y2())
-                    scotendpt = self.graphicsView.mapToScene(otherendpt)
+                    scotendpt = self.histogramGraphicsView.mapToScene(otherendpt)
                     otherend = QPointF(scotendpt)
                     self.scene.addItem(QGraphicsLineItem(QLineF(otherend,
                                                                 end)))
@@ -371,7 +371,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     # Update the visualisation of the bin structure
     def updateBins(self):
         self.directionneutral = False
-        if self.DirectionNeutralCheckBox.isChecked():
+        if self.directionNeutralCheckBox.isChecked():
             self.directionneutral = True
         self.bins = self.binsSpinBox.value()
         if self.bins < 2:
