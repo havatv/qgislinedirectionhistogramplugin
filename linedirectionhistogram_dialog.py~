@@ -51,14 +51,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     def __init__(self, iface, parent=None):
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
-
-        # Some constants
         self.LINEDIRECTIONHISTOGRAM = self.tr('LineDirectionHistogram')
         self.BROWSE = self.tr('Browse')
         self.CANCEL = self.tr('Cancel')
         self.CLOSE = self.tr('Close')
         self.OK = self.tr('OK')
-        self.NUMBEROFRINGS = 10  # Number of concentric rings in the histogram
 
         """Constructor."""
         super(linedirectionhistogramDialog, self).__init__(parent)
@@ -89,7 +86,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         noWeightingCBCh = self.noWeightingCheckBox.stateChanged
         noWeightingCBCh.connect(self.noWeighting)
         binsSBCh = self.binsSpinBox.valueChanged[str]
-        binsSBCh.connect(self.updateBins)
+        binsSBCh.connect(self.binsChanged)
         offsetAngleSBCh = self.offsetAngleSpinBox.valueChanged[str]
         offsetAngleSBCh.connect(self.updateBins)
 
@@ -104,6 +101,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.worker = None
         self.inputlayerid = None
         self.layerlistchanging = False
+        self.numberofrings = 10
         self.bins = 8
         self.binsSpinBox.setValue(self.bins)
         # Direction neutrality is the default
@@ -112,7 +110,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # Weighting by line segment length is the default
         self.noweighting = False
         self.noWeightingCheckBox.setChecked(self.noweighting)
-        self.noWeightingCheckBox.setEnabled(False)
         self.selectedFeaturesCheckBox.setChecked(True)
         self.setupScene = QGraphicsScene(self)
         self.setupGraphicsView.setScene(self.setupScene)
@@ -120,7 +117,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.graphicsView.setScene(self.scene)
         maxoffsetangle = int(360 / self.bins)
         if self.directionneutral:
-            maxoffsetangle = int(maxoffsetangle / 2)
+            maxoffsetangle = int(180 / self.bins)
         self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
         self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
         self.result = None
@@ -211,9 +208,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                         csvtfile.write('"Real","Real","Real","Integer"')
                 except IOError, e:
                     self.showInfo("Trouble writing the CSV file: " + str(e))
+
             # Draw the histogram
             self.drawHistogram()
-            self.noWeightingCheckBox.setEnabled(True)
         else:
             # notify the user that something went wrong
             if not ok:
@@ -260,6 +257,21 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         outpath = saveDialog(self)
         self.outputFile.setText(outpath)
 
+    def binsChanged(self):
+        bins = self.binsSpinBox.value()
+        maxoffsetangle = int(360 / self.bins)
+        if self.directionneutral:
+            maxoffsetangle = int(180 / self.bins)
+        self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
+        self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
+        offsetangle = self.offsetAngleSpinBox.value()
+        if offsetangle > maxoffsetangle:
+            self.offsetAngleSpinBox.setValue(maxoffsetangle)
+        elif offsetangle < -maxoffsetangle:
+            self.offsetAngleSpinBox.setValue(-maxoffsetangle)
+        else:
+            self.updateBins()
+
     def noWeighting(self):
         if self.result is not None:
             self.drawHistogram()
@@ -278,8 +290,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             if self.result[i][element] > maxvalue:
                 maxvalue = self.result[i][element]
         self.scene.clear()
-        if maxvalue == 0:
-            return
         viewprect = QRectF(self.graphicsView.viewport().rect())
         self.graphicsView.setSceneRect(viewprect)
         bottom = self.graphicsView.sceneRect().bottom()
@@ -296,8 +306,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         center = QPoint(left + width / 2.0, top + height / 2.0)
         start = QPointF(self.graphicsView.mapToScene(center))
         # Create some concentric rings as background:
-        for i in range(self.NUMBEROFRINGS):
-                step = maxlength / self.NUMBEROFRINGS
+        for i in range(self.numberofrings):
+                step = maxlength / self.numberofrings
                 radius = step * (i + 1)
                 circle = QGraphicsEllipseItem(start.x() - radius,
                                               start.y() - radius,
@@ -360,21 +370,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.DirectionNeutralCheckBox.isChecked():
             self.directionneutral = True
         self.bins = self.binsSpinBox.value()
-        if self.bins < 2:
-            self.bins = 2
-            self.binsSpinBox.setValue(bins)
-        maxoffsetangle = int(360 / self.bins)
-        if self.directionneutral:
-            maxoffsetangle = int(maxoffsetangle / 2)
-        self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
-        self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
         self.offsetangle = self.offsetAngleSpinBox.value()
-        if self.offsetangle > maxoffsetangle:
-            self.offsetAngleSpinBox.setValue(maxoffsetangle)
-            self.offsetangle = maxoffsetangle
-        elif self.offsetangle < -maxoffsetangle:
-            self.offsetAngleSpinBox.setValue(-maxoffsetangle)
-            self.offsetangle = -maxoffsetangle
         self.setupScene.clear()
         self.setupScene.update()
         viewprect = QRectF(self.setupGraphicsView.viewport().rect())
@@ -393,7 +389,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         center = QPoint(left + width / 2.0, top + height / 2.0)
         start = QPointF(self.setupGraphicsView.mapToScene(center))
         # Create some concentric rings:
-        setuprings = self.NUMBEROFRINGS // 2
+        setuprings = self.numberofrings // 2
         for i in range(setuprings):
             step = maxlength / setuprings
             radius = step * (i + 1)
@@ -420,9 +416,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                          QLineF(mirrorpt, end)))
             else:
                 self.setupScene.addItem(QGraphicsLineItem(QLineF(start, end)))
-        self.noWeightingCheckBox.setEnabled(False)
-        # end of updatebins
-
 
     #def layerlistchanged(self):
     #    self.layerlistchanging = True

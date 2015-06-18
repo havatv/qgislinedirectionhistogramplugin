@@ -110,6 +110,9 @@
            <property name="toolTip">
             <string>Number of direction bins to use</string>
            </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
            <property name="value">
             <number>8</number>
            </property>
