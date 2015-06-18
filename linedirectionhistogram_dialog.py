@@ -21,6 +21,16 @@
  ***************************************************************************/
 """
 
+# User interface input components:
+#   graphicsView: The GraphicsView that contains the histogram
+#   setupGraphicsView: The GraphicsView that shows the setup (bins and angles)
+#   binsSpinBox
+#   offsetAngleSpinBox
+#   DirectionNeutralCheckBox
+#   selectedFeaturesCheckBox
+#   noWeightingCheckBox
+#   inputLayer
+
 import os
 import csv
 
@@ -133,6 +143,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
         if inputlayer is None:
             self.showError(self.tr('No input layer defined'))
+            return
+        if inputlayer.featureCount() == 0:
+            self.showError(self.tr('No features in input layer'))
+            self.scene.clear()
             return
         self.bins = self.binsSpinBox.value()
         self.outputfilename = self.outputFile.text()

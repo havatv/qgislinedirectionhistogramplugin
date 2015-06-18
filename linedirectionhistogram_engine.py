@@ -89,6 +89,10 @@ class Worker(QtCore.QObject):
             self.processed = 0
             self.percentage = 0
             self.feature_count = inputlayer.featureCount()
+            if self.feature_count == 0:
+                self.error.emit("No features in layer")
+                self.finished.emit(False, None)
+                return
             self.increment = self.feature_count // 1000
             # Initialise the bins
             statistics = []
