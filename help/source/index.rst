@@ -108,9 +108,13 @@ is used for the calculations.
 
 Versions
 ===============
-The current version is 1.1.0
+The current version is 1.2.
 
-- 1.1.0:
+- 1.2
+    - Fixed issue #1 (on update of min/max for angle offset)
+    - Fixed issue #2 (divide by zero when no features in layer)
+    - Fixed issue #3 (effect of "no weighting" checkbox)
+- 1.1:
     - Selected features option introduced
     - Unweighted option introduced
     - Multigeometry support
@@ -118,7 +122,7 @@ The current version is 1.1.0
     - CSV angle offset bug fixed
     - User interface fixes and updates
 
-- 1.0.0: First official version.
+- 1.0: First official version.
 
 
 Links
