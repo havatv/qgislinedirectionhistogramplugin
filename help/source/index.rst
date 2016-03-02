@@ -19,8 +19,9 @@ Functionality
   polygon vector dataset.
 
 - The accumulated lengths of the line segments for each direction bin
-  determines the shape of the histogram.  Alternatively, the number
-  of segments can be used (no weighting on line segment length).
+  determines the shape of the histogram.
+  Alternatively, the number of segments can be used (no weighting on
+  line segment length).
 
 - Line and Polygon vector layers are supported, including
   multigeometries.
@@ -42,9 +43,11 @@ Functionality
   
 - The histogram can be saved to a CSV file.
 
+- The histogram can be saved as PDF (100 mm by 100 mm) and SVG
+  (200 by 200).
+  
 - If the plugin window is resized, the direction histogram is also
   resized.
-  
 
 The displayed histogram
 ========================
@@ -93,6 +96,12 @@ Options
 - The user can specify if line segment length shall be used for
   weighting the bins (this is the default).
 
+- The user can choose to have the area of a sector of the
+  histogram be proportional to the accumulated amount for
+  that sector.
+  The default is that the length / radius of a sector is
+  proportional to the accumulated amount.
+
 Implementation
 ================
 
@@ -108,8 +117,11 @@ is used for the calculations.
 
 Versions
 ===============
-The current version is 1.2.
+The current version is 1.3.
 
+- 1.3
+    - PDF and SVG export added
+    - Area-proportional sectors option introduced
 - 1.2
     - Fixed issue #1 (on update of min/max for angle offset)
     - Fixed issue #2 (divide by zero when no features in layer)

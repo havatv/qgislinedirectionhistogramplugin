@@ -10,8 +10,8 @@
 name=Line direction histogram
 qgisMinimumVersion=2.0
 description=Create histogram of line directions
-about=Visualises the distribution of line segment directions (weighted using the line segment length).  Can save the histogram to a CSV file.
-version=1.2
+about=Visualises the distribution of line segment directions (weighted using the line segment lengths).  Can save the histogram as CSV, PDF or SVG.
+version=1.3
 author=Håvard Tveite, NMBU
 email=havard.tveite@nmbu.no
 
@@ -19,7 +19,10 @@ email=havard.tveite@nmbu.no
 
 # Optional items:
 # Uncomment the following line and add your changelog:
-changelog=1.2
+changelog=1.3
+    -- PDF and SVG export added
+    -- Area-proportional sectors option introduced
+    1.2
     -- Fixed issue #1 (on update of min/max for angle offset)
     -- Fixed issue #2 (divide by zero when no features in layer)
     -- Fixed issue #3 (effect of "no weighting" checkbox)
