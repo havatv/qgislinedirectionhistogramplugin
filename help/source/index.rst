@@ -14,9 +14,9 @@ The QGIS Line Direction Histogram Plugin
 Functionality
 =================
 
-- The QGIS Line Direction Histogram Plugin can be used to investigate
-  the distribution of the directions of line segments of a line or
-  polygon vector dataset.
+- The QGIS Line Direction Histogram Plugin creates a rose diagram
+  that can be used to investigate the distribution of the directions
+  of line segments of a line or polygon vector dataset.
 
 - The accumulated lengths of the line segments for each direction bin
   determines the shape of the histogram.
@@ -31,15 +31,16 @@ Functionality
 - The number of direction bins for the histogram can be specified.
 
 - All the direction bin sectors will have the same size (same number
-  of degrees covered).
+  of degrees covered).  This type of angle histogram is also called
+  a "rose diagram" or "rose plot".
 
 - An angle offset (positive or negative - clockwise or counter
   clockwise) for the direction bins can be specified.
 
 - The positions of the direction bins are shown graphically.
 
-- A direction histogram is displayed, showing the distribution of the
-  directions according to the chosen bins.
+- A direction histogram (or rose diagram) is displayed, showing the
+  distribution of the directions according to the chosen bins.
   
 - The histogram can be saved to a CSV file.
 
@@ -71,6 +72,7 @@ The saved histogram is a CSV file with four columns:
   the line segments that fall within the bin.
 - The fourth column ("Number") contains the number of line segments
   that fall within the bin.
+
 "." is used as the decimal separator in the CSV file.
 
 The CSV file is accompanied by a CSVT file that describes the
@@ -100,7 +102,8 @@ Options
   histogram be proportional to the accumulated amount for
   that sector.
   The default is that the length / radius of a sector is
-  proportional to the accumulated amount.
+  proportional to the accumulated amount (histogram like
+  behaviour).
 
 Implementation
 ================

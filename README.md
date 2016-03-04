@@ -1,2 +1,2 @@
 # qgislinedirectionhistogramplugin
-A QGIS plugin to create a histogram of line directions
+A QGIS plugin to create a histogram (rose diagram) of line directions
