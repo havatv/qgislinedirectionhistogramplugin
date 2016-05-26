@@ -38,7 +38,7 @@ changelog=1.3
 # Tags are comma separated with spaces allowed
 tags=direction,line,histogram,line segment,orientation,rose diagram,statistics
 #homepage=https://plugins.qgis.org/plugins/LineDirectionHistogram/
-homepage=http://arken.umb.no/~havatv/gis/qgisplugins/LineDirectionHistogram/
+homepage=http://arken.nmbu.no/~havatv/gis/qgisplugins/LineDirectionHistogram/
 tracker=https://github.com/havatv/qgislinedirectionhistogramplugin/issues
 repository=https://github.com/havatv/qgislinedirectionhistogramplugin.git
 icon=icon.png
