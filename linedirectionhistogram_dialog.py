@@ -44,6 +44,7 @@ from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
 from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
 from PyQt4.QtGui import QGraphicsView
 from PyQt4.QtGui import QPrinter, QPainter
+from PyQt4.QtGui import QApplication, QImage, QPixmap
 from PyQt4.QtSvg import QSvgGenerator
 from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
@@ -110,8 +111,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         offsetAngleSBCh.connect(self.updateBins)
         self.saveAsPDFButton.clicked.connect(self.saveAsPDF)
         self.saveAsSVGButton.clicked.connect(self.saveAsSVG)
+        self.copyToClipboardButton.clicked.connect(self.copyToClipboard)
+
         self.saveAsPDFButton.setEnabled(False)
         self.saveAsSVGButton.setEnabled(False)
+        self.copyToClipboardButton.setEnabled(False)
         cancelButton.setEnabled(True)
 
         #self.iface.legendInterface().itemAdded.connect(
@@ -136,8 +140,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.selectedFeaturesCheckBox.setChecked(True)
         self.setupScene = QGraphicsScene(self)
         self.setupGraphicsView.setScene(self.setupScene)
-        self.scene = QGraphicsScene(self)
-        self.histogramGraphicsView.setScene(self.scene)
+        self.histscene = QGraphicsScene(self)
+        self.histogramGraphicsView.setScene(self.histscene)
         maxoffsetangle = int(360 / self.bins)
         if self.directionneutral:
             maxoffsetangle = int(maxoffsetangle / 2)
@@ -156,7 +160,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             return
         if inputlayer.featureCount() == 0:
             self.showError(self.tr('No features in input layer'))
-            self.scene.clear()
+            self.histscene.clear()
             return
         self.bins = self.binsSpinBox.value()
         self.outputfilename = self.outputFile.text()
@@ -199,6 +203,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(True)
         self.saveAsPDFButton.setEnabled(False)
         self.saveAsSVGButton.setEnabled(False)
+        self.copyToClipboardButton.setEnabled(False)
 
     def workerFinished(self, ok, ret):
         """Handles the output from the worker and cleans up after the
@@ -253,6 +258,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
         self.saveAsPDFButton.setEnabled(True)
         self.saveAsSVGButton.setEnabled(True)
+        self.copyToClipboardButton.setEnabled(True)
         # end of workerFinished(self, ok, ret)
 
     def workerError(self, exception_string):
@@ -310,7 +316,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         for i in range(len(self.result)):
             if self.result[i][element] > maxvalue:
                 maxvalue = self.result[i][element]
-        self.scene.clear()
+        self.histscene.clear()
         if maxvalue == 0:
             return
         viewprect = QRectF(self.histogramGraphicsView.viewport().rect())
@@ -337,7 +343,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                           radius * 2.0,
                                           radius * 2.0)
             circle.setPen(QPen(QColor(153, 153, 255)))
-            self.scene.addItem(circle)
+            self.histscene.addItem(circle)
         for i in range(self.bins):
             linelength = maxlength * self.result[i][element] / maxvalue
             if self.proportionalAreaCheckBox.isChecked():
@@ -354,7 +360,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                              directedline.y2())
                 scotendpt = self.histogramGraphicsView.mapToScene(otherendpt)
                 otherend = QPointF(scotendpt)
-                self.scene.addItem(QGraphicsLineItem(QLineF(otherend,
+                self.histscene.addItem(QGraphicsLineItem(QLineF(otherend,
                                                             end)))
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
@@ -365,7 +371,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                                self.offsetangle)))
                 sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
                 sector.setBrush(QBrush(QColor(240, 240, 240)))
-                self.scene.addItem(sector)
+                self.histscene.addItem(sector)
                 # The sector in the oposite direction
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
@@ -376,9 +382,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                                self.offsetangle)))
                 sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
                 sector.setBrush(QBrush(QColor(240, 240, 240)))
-                self.scene.addItem(sector)
+                self.histscene.addItem(sector)
             else:
-                self.scene.addItem(QGraphicsLineItem(QLineF(start, end)))
+                self.histscene.addItem(QGraphicsLineItem(QLineF(start, end)))
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
@@ -388,7 +394,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                                self.offsetangle)))
                 sector.setSpanAngle(int(16 * (-360.0 / self.bins)))
                 sector.setBrush(QBrush(QColor(240, 240, 240)))
-                self.scene.addItem(sector)
+                self.histscene.addItem(sector)
 
     # Update the visualisation of the bin structure
     def updateBins(self):
@@ -549,7 +555,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         printer.setOutputFormat(QPrinter.PdfFormat)
         printer.setOutputFileName(savename)
         p = QPainter(printer)
-        self.scene.render(p)
+        self.histscene.render(p)
         p.end()
 
     # Save to SVG
@@ -561,9 +567,12 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         svgGen.setSize(QSize(200, 200))
         svgGen.setViewBox(QRect(0, 0, 201, 201))
         painter = QPainter(svgGen)
-        self.scene.render(painter)
+        self.histscene.render(painter)
         painter.end()
 
+    def copyToClipboard(self):
+        QApplication.clipboard().setImage(QImage(
+                        QPixmap.grabWidget(QGraphicsView(self.histscene))))
 
 def saveCSVDialog(parent):
         """Shows a file dialog and return the selected file path."""
@@ -581,3 +590,4 @@ def saveCSVDialog(parent):
             outDir = os.path.dirname(outFilePath)
             settings.setValue(key, outDir)
         return outFilePath
+

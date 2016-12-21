@@ -45,7 +45,10 @@ Functionality
 - The histogram can be saved to a CSV file.
 
 - The histogram can be saved as PDF (100 mm by 100 mm) and SVG
-  (200 by 200).
+  (200 by 200). -- added in version 1.3
+
+- The histogram can be copied to the clipboard. -- added in version
+  1.4
   
 - If the plugin window is resized, the direction histogram is also
   resized.
@@ -59,8 +62,8 @@ the lengths of the sectors of the rest of the bins are scaled
 proportionally.
 
 
-The saved histogram
-====================
+The saved histogram (CSV)
+=========================
 
 The saved histogram is a CSV file with four columns:
 
@@ -120,7 +123,10 @@ is used for the calculations.
 
 Versions
 ===============
-The current version is 1.3.
+The current version is 1.4.
+
+- 1.4
+    - Copy to clipboard button added (#8)
 
 - 1.3
     - PDF and SVG export added

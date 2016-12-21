@@ -408,6 +408,13 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_9">
      <item>
+      <widget class="QPushButton" name="copyToClipboardButton">
+       <property name="text">
+        <string>Copy to Clipboard</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer_8">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
