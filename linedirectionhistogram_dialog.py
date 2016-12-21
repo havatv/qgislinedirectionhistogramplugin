@@ -574,6 +574,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         QApplication.clipboard().setImage(QImage(
                         QPixmap.grabWidget(QGraphicsView(self.histscene))))
 
+
 def saveCSVDialog(parent):
         """Shows a file dialog and return the selected file path."""
         settings = QSettings()
@@ -590,4 +591,3 @@ def saveCSVDialog(parent):
             outDir = os.path.dirname(outFilePath)
             settings.setValue(key, outDir)
         return outFilePath
-
