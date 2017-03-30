@@ -49,6 +49,7 @@ from PyQt4.QtSvg import QSvgGenerator
 from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 #from qgis.gui import QgsMessageBar
+from qgis.utils import showPluginHelp
 
 from linedirectionhistogram_engine import Worker
 
@@ -71,6 +72,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.LINEDIRECTIONHISTOGRAM = self.tr('LineDirectionHistogram')
         self.BROWSE = self.tr('Browse')
         self.CANCEL = self.tr('Cancel')
+        self.HELP = self.tr('Help')
         self.CLOSE = self.tr('Close')
         self.OK = self.tr('OK')
         self.NUMBEROFRINGS = 10  # Number of concentric rings in the histogram
@@ -88,6 +90,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         okButton.setText(self.OK)
         cancelButton = self.button_box.button(QDialogButtonBox.Cancel)
         cancelButton.setText(self.CANCEL)
+        helpButton = self.helpButton
+        helpButton.setText(self.HELP)
 
         browseButton = self.BrowseButton
         browseButton.setText(self.BROWSE)
@@ -97,6 +101,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # Connect signals
         okButton.clicked.connect(self.startWorker)
         cancelButton.clicked.connect(self.killWorker)
+        helpButton.clicked.connect(self.giveHelp)
         closeButton.clicked.connect(self.reject)
         browseButton.clicked.connect(self.browse)
         dirNeutralCBCh = self.directionNeutralCheckBox.stateChanged
@@ -283,6 +288,13 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                      self.LINEDIRECTIONHISTOGRAM,
                                      QgsMessageLog.INFO)
             self.worker.kill()
+
+    def giveHelp(self):
+        self.showInfo('Giving help')
+        #QDesktopServices.openUrl(QUrl.fromLocalFile(
+        #                 self.plugin_dir + "/help/html/index.html"))
+        showPluginHelp(None, "help/html/index")
+    # end of giveHelp
 
     # Implement the reject method to have the possibility to avoid
     # exiting the dialog when cancelling

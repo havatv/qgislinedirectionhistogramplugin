@@ -123,8 +123,10 @@ is used for the calculations.
 
 Versions
 ===============
-The current version is 1.4.
+The current version is 1.5.
 
+- 1.5
+    - Added help button
 - 1.4
     - Copy to clipboard button added (#8)
 
