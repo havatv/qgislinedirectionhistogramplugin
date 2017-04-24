@@ -88,8 +88,10 @@ class Worker(QtCore.QObject):
                 return
             self.processed = 0
             self.percentage = 0
-            self.feature_count = inputlayer.featureCount()
-            if self.feature_count == 0:
+            if self.selectedfeaturesonly:
+                self.feature_count = inputlayer.selectedFeatureCount()
+            else:
+                self.feature_count = inputlayer.featureCount()
                 self.error.emit("No features in layer")
                 self.finished.emit(False, None)
                 return
@@ -99,8 +101,7 @@ class Worker(QtCore.QObject):
             for i in range(self.bins):
                 statistics.append([0.0, 0])
             # Get the features (iterator)
-            if (inputlayer.selectedFeatureCount() > 0 and
-                                          self.selectedfeaturesonly):
+            if self.selectedfeaturesonly:
                 features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
