@@ -129,7 +129,6 @@ The current version is 1.5.
     - Added help button
 - 1.4
     - Copy to clipboard button added (#8)
-
 - 1.3
     - PDF and SVG export added
     - Area-proportional sectors option introduced
@@ -144,7 +143,6 @@ The current version is 1.5.
     - CSV file header row added
     - CSV angle offset bug fixed
     - User interface fixes and updates
-
 - 1.0: First official version.
 
 

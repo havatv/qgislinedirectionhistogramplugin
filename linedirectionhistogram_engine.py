@@ -92,6 +92,7 @@ class Worker(QtCore.QObject):
                 self.feature_count = inputlayer.selectedFeatureCount()
             else:
                 self.feature_count = inputlayer.featureCount()
+            if self.feature_count == 0:
                 self.error.emit("No features in layer")
                 self.finished.emit(False, None)
                 return
