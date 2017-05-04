@@ -281,24 +281,22 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.svgfiles[i+1] = filename
                 #self.result = ret[2]
 
-
+                # Create the SVG symbol renderer
                 fni = self.pointLayer.fieldNameIndex(self.idfieldname)
                 unique_values = self.pointLayer.dataProvider().uniqueValues(fni)
                 categories = []
-                for unique_value in unique_values:
-                    self.showInfo("Unique value: " + str(unique_value))
+                for val in unique_values:
+                    self.showInfo("Unique value: " + str(val))
                     # initialize the default symbol for this geometry type
-                    symbol = QgsSymbolV2.defaultSymbol(self.pointLayer.geometryType())
+                    symbol = QgsSymbolV2.defaultSymbol(
+                                self.pointLayer.geometryType())
                     # configure a symbol layer
                     layer_style = {}
-
                     layer_style['fill'] = '#ffffff'
-                    layer_style['name'] = self.svgfiles[int(unique_value)]
+                    layer_style['name'] = self.svgfiles[int(val)]
                     layer_style['outline'] = '#000000'
                     layer_style['outline-width'] = '6.8'
-                    layer_style['size'] = '20'
-
-
+                    layer_style['size'] = '50'
                     #layer_style['color'] = '%d, %d, %d' % (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
                     symbol_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
                     #symbol_layer = QgsSimpleFillSymbolLayerV2.create(layer_style)
@@ -306,7 +304,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     if symbol_layer is not None:
                         symbol.changeSymbolLayer(0, symbol_layer)
                     # create renderer object
-                    category = QgsRendererCategoryV2(unique_value, symbol, str(unique_value))
+                    category = QgsRendererCategoryV2(val, symbol, str(val))
                     # entry for the list of category items
                     categories.append(category)
                 # create renderer object
