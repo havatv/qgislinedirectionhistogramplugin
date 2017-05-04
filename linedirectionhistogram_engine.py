@@ -112,11 +112,15 @@ class Worker(QtCore.QObject):
                 features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
+            # Create a vector of the tile (Polygon) geometries
             tilegeoms = []
             if self.tilelayer is not None:
                 self.status.emit("Tiling!")
                 for tile in self.tilelayer.getFeatures():
-                    tilegeoms.append(tile.geometry())
+                    self.status.emit("tile geom: " + str(tile.geometry().asPolygon()))
+                    # Add the tile geometry to the vector
+                    tilegeoms.append(QgsGeometry(tile.geometry()))
+                # Create a vector to store the bins for the tiles
                 for i in range(len(tilegeoms)):
                     mybins = []
                     for j in range(self.bins):
@@ -159,20 +163,37 @@ class Worker(QtCore.QObject):
                 tilelines[0] = inputlines
                 # Clip the lines based on the tile layer
                 if self.tilelayer is not None:
-                    for i in range(len(tilegeoms)): # Go through the tiles
+                    i = 0
+                    for tile in tilegeoms: # Go through the tiles
+                        self.status.emit("tile: " + str(i+1))
+                        #self.status.emit("tilegeom: " + str(tilegeoms[i]))
+                        #self.status.emit("tilegeom, type: " + str(tile.type()))
+                        #if tile.type() == 2:
+                            #self.status.emit("tilegeom: " + str(tile.asPolyline()))
+                            #self.status.emit("tilegeom: " + str(tile.asPolygon()))
+                        #self.status.emit("tilegeom: " + str(tile))
                         newlines = []
                         for linegeom in inputlines:
                             #self.status.emit("linegeom: " + str(linegeom))
-                            cliplines = QgsGeometry.fromPolyline(linegeom).intersection(tilegeoms[i])
+                            qgsgeom = QgsGeometry.fromPolyline(linegeom)
+                            #self.status.emit("linegeom2: " + str(qgsgeom.asPolyline()))
+#                            clipres = QgsGeometry.fromPolyline(linegeom).intersection(tile)
+                            clipres = qgsgeom.intersection(tile)
+
+                            self.status.emit("clipres: " + str(clipres.asPolyline()))
                             #newlines.append(linegeom.intersection(tilegeoms[i]))
-                            newlines.append(cliplines.asPolyline())
+                            newlines.append(clipres.asPolyline())
                         tilelines[i+1] = newlines
+                        i = i + 1
                     self.status.emit("tilelines: " + str(tilelines))
                 # Lines for the feature have been extracted - do calculations
                 j = 0
                 for tileline2 in tilelines:
+                  self.status.emit("tile: " + str(j))
+                  self.status.emit("tilelines2: " + str(tileline2))
                   #for inputlinegeom in inputlines:
                   for inputlinegeom in tileline2:
+                    self.status.emit("inputlinegeom: " + str(inputlinegeom))
                     # Skip degenerate lines
                     if inputlinegeom is None or len(inputlinegeom) < 2:
                         continue
@@ -197,6 +218,7 @@ class Worker(QtCore.QObject):
                         # Have to handle special case to keep index in range
                         if fittingbin == self.bins:
                             fittingbin = 0
+                        self.status.emit("fittingbin: " + str(fittingbin))
                         # Add to the length of the bin
                         statistics[j][fittingbin][0] = (statistics[j][fittingbin][0]
                                                   + linelength)
@@ -204,6 +226,7 @@ class Worker(QtCore.QObject):
                         statistics[j][fittingbin][1] = (statistics[j][fittingbin][1]
                                                   + 1)
                     j = j + 1
+                self.status.emit("stats: " + str(statistics))
                 self.calculate_progress()
         except:
             import traceback
