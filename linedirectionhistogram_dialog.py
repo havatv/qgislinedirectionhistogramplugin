@@ -100,8 +100,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         helpButton = self.helpButton
         helpButton.setText(self.HELP)
 
-        browseButton = self.BrowseButton
-        browseButton.setText(self.BROWSE)
+        browseButtonCSV = self.browseButtonCSV
+        browseButtonCSV.setText(self.BROWSE)
+        browseButtonTile = self.browseButtonTile
+        browseButtonTile.setText(self.BROWSE)
         closeButton = self.button_box.button(QDialogButtonBox.Close)
         closeButton.setText(self.CLOSE)
 
@@ -110,7 +112,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         cancelButton.clicked.connect(self.killWorker)
         helpButton.clicked.connect(self.giveHelp)
         closeButton.clicked.connect(self.reject)
-        browseButton.clicked.connect(self.browse)
+        browseButtonCSV.clicked.connect(self.browse)
+        browseButtonTile.clicked.connect(self.browseTile)
         dirNeutralCBCh = self.directionNeutralCheckBox.stateChanged
         dirNeutralCBCh.connect(self.updateBins)
         noWeightingCBCh = self.noWeightingCheckBox.stateChanged
@@ -129,7 +132,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.saveAsSVGButton.setEnabled(False)
         self.copyToClipboardButton.setEnabled(False)
         cancelButton.setEnabled(True)
-
+        #self.tileDirectory.
         #self.iface.legendInterface().itemAdded.connect(
         #    self.layerlistchanged)
         #self.iface.legendInterface().itemRemoved.connect(
@@ -274,6 +277,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.result = ret[i+1]
                     self.drawHistogram()
                     tmpdir = tempfile.gettempdir()
+                    if self.tileDirectory.text():
+                        tmpdir = self.tileDirectory.text()
                     tempfilepathprefix = tmpdir + '/qgisLDH_'
                     filename = tempfilepathprefix + 'rose' + str(i+1) + '.svg'
                     self.saveAsSVG(filename)
@@ -403,6 +408,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     def browse(self):
         outpath = saveCSVDialog(self)
         self.outputFile.setText(outpath)
+
+    def browseTile(self):
+        outpath = findTileDialog(self)
+        self.tileDirectory.setText(outpath)
 
     def noWeighting(self):
         if self.result is not None:
@@ -690,15 +699,33 @@ def saveCSVDialog(parent):
         """Shows a file dialog and return the selected file path."""
         settings = QSettings()
         key = '/UI/lastShapefileDir'
-        outDir = settings.value(key)
+        tryDir = settings.value(key)
         filter = 'Comma Separated Value (*.csv)'
         outFilePath = QFileDialog.getSaveFileName(parent,
-                       parent.tr('Output CSV file'), outDir, filter)
+                       parent.tr('Output CSV file'), tryDir, filter)
         outFilePath = unicode(outFilePath)
         if outFilePath:
             root, ext = os.path.splitext(outFilePath)
             if ext.upper() != '.CSV':
                 outFilePath = '%s.csv' % outFilePath
+            tryDir = os.path.dirname(outFilePath)
+            settings.setValue(key, tryDir)
+        return outFilePath
+
+def findTileDialog(parent):
+        """Shows a file dialog and return the selected file path."""
+        settings = QSettings()
+        key = '/UI/lastShapefileDir'
+        outDir = settings.value(key)
+        #filter = 'Comma Separated Value (*.csv)'
+        outFilePath = QFileDialog.getExistingDirectory(parent,
+                       parent.tr('Directory for SVGs'), outDir)
+        outFilePath = unicode(outFilePath)
+        if outFilePath:
+            #root, ext = os.path.splitext(outFilePath)
+            #if ext.upper() != '.CSV':
+            #    outFilePath = '%s.csv' % outFilePath
             outDir = os.path.dirname(outFilePath)
             settings.setValue(key, outDir)
         return outFilePath
+
