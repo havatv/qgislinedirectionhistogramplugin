@@ -286,7 +286,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 unique_values = self.pointLayer.dataProvider().uniqueValues(fni)
                 categories = []
                 for val in unique_values:
-                    self.showInfo("Unique value: " + str(val))
+                    #self.showInfo("Unique value: " + str(val))
                     # initialize the default symbol for this geometry type
                     symbol = QgsSymbolV2.defaultSymbol(
                                 self.pointLayer.geometryType())
