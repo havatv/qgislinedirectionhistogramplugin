@@ -39,6 +39,7 @@ from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
 from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from PyQt4.QtCore import QSizeF, QSize, QRect
+from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
 from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
 from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
@@ -48,6 +49,8 @@ from PyQt4.QtGui import QApplication, QImage, QPixmap
 from PyQt4.QtSvg import QSvgGenerator
 from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
+from qgis.core import QgsVectorLayer
+from qgis.core import QgsField, QgsFeature
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
 
@@ -152,6 +155,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             maxoffsetangle = int(maxoffsetangle / 2)
         self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
         self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
+        self.pointLayer = None
         self.result = None
 
     def startWorker(self):
@@ -173,10 +177,37 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.directionNeutralCheckBox.isChecked():
             self.directionneutral = True
         self.offsetangle = self.offsetAngleSpinBox.value()
+        tilelayer = None
+        if self.useTilingCheckBox.isChecked():
+            layerindex = self.TilingLayer.currentIndex()
+            layerId = self.TilingLayer.itemData(layerindex)
+            tilelayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+            if tilelayer is None:
+                self.showError(self.tr('No tile layer defined'))
+                return
+            if tilelayer.featureCount() == 0:
+                self.showError(self.tr('No features in tile layer'))
+                self.histscene.clear()
+                return
+            self.pointLayer = QgsVectorLayer('Point?crs=EPSG:4326',
+                                       "SVGPoints", "memory")
+            self.pointLayer.setCrs(tilelayer.crs())
+            self.pointLayer.dataProvider().addAttributes([QgsField("ID", QVariant.Int)])
+            self.pointLayer.updateFields()
+            id = 1
+            for feature in tilelayer.getFeatures():
+                newfeature = QgsFeature()
+                #centroid = newfeature.geometry().centroid()
+                centroid = feature.geometry().pointOnSurface()
+                newfeature.setGeometry(centroid)
+                newfeature.setAttributes([id])
+                self.pointLayer.dataProvider().addFeatures([newfeature])
+                id = id + 1
         # create a new worker instance
         worker = Worker(inputlayer, self.bins, self.directionneutral,
                         self.offsetangle,
-                        self.selectedFeaturesCheckBox.isChecked())
+                        self.selectedFeaturesCheckBox.isChecked(),
+                        tilelayer)
         ## configure the QgsMessageBar
         #msgBar = self.iface.messageBar().createMessage(self.tr('Joining'), '')
         #self.aprogressBar = QProgressBar()
@@ -220,37 +251,53 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.thread.deleteLater()
         # remove widget from the message bar (pop)
         #self.iface.messageBar().popWidget(self.messageBar)
+        # Three outcomes:
+        # 1) No data returned
+        # 2) A vector with only one element: Draw the rose diagram
+        # 3) A vector with several elements: Create a layer
+        #                                    with rose diagrams as symbols
         if ok and ret is not None:
-            self.result = ret
+            self.result = ret[0]
+            if len(ret) > 1:  # Several elements - create SVG files for layer
+                self.showInfo("Several elements in the result: " + str(len(ret)))
+                for i in range(len(ret)-1):
+                    self.showInfo("Tile "+str(i+1)+": " + str(len(ret[i+1])))
+                    self.showInfo("Elements: " + str(ret[i+1]))
+                    #self.result = ret[i+1]
+                    #self.drawHistogram()
+                    #self.saveAsPDF()
+                #self.result = ret[2]
+            QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
+            self.result = ret[0]
             # report the result
             # As a CSV file:
             if self.outputfilename != "":
-                try:
-                    with open(self.outputfilename, 'wb') as csvfile:
-                        csvwriter = csv.writer(csvfile, delimiter=';',
-                                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        csvwriter.writerow(["StartAngle", "EndAngle",
-                                            "Length", "Number"])
-                        for i in range(len(ret)):
-                            if self.directionneutral:
-                                angle = (i * 180.0 / self.bins +
-                                                self.offsetangle)
-                                csvwriter.writerow([angle,
-                                                   angle + 180.0 / self.bins,
+                    try:
+                        with open(self.outputfilename, 'wb') as csvfile:
+                            csvwriter = csv.writer(csvfile, delimiter=';',
+                                        quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                            csvwriter.writerow(["StartAngle", "EndAngle",
+                                                "Length", "Number"])
+                            for i in range(len(ret)):
+                                if self.directionneutral:
+                                    angle = (i * 180.0 / self.bins +
+                                                   self.offsetangle)
+                                    csvwriter.writerow([angle,
+                                                       angle + 180.0 / self.bins,
+                                                       ret[i][0], ret[i][1]])
+                                else:
+                                    angle = (i * 360.0 / self.bins +
+                                                             self.offsetangle)
+                                    csvwriter.writerow([angle,
+                                                   angle + 360.0 / self.bins,
                                                    ret[i][0], ret[i][1]])
-                            else:
-                                angle = (i * 360.0 / self.bins +
-                                                         self.offsetangle)
-                                csvwriter.writerow([angle,
-                                               angle + 360.0 / self.bins,
-                                               ret[i][0], ret[i][1]])
-                    with open(self.outputfilename + 't', 'wb') as csvtfile:
-                        csvtfile.write('"Real","Real","Real","Integer"')
-                except IOError, e:
-                    self.showInfo("Trouble writing the CSV file: " + str(e))
+                        with open(self.outputfilename + 't', 'wb') as csvtfile:
+                            csvtfile.write('"Real","Real","Real","Integer"')
+                    except IOError, e:
+                        self.showInfo("Trouble writing the CSV file: " + str(e))
             # Draw the histogram
             self.drawHistogram()
-        else:
+        else:  # No data returned
             # notify the user that something went wrong
             if not ok:
                 self.showError(self.tr('Aborted') + '!')

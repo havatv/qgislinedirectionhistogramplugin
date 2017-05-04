@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>411</width>
-    <height>824</height>
+    <width>485</width>
+    <height>910</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,6 +27,32 @@
        <widget class="QCheckBox" name="selectedFeaturesCheckBox">
         <property name="text">
          <string>Selected features only</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Polygon layer for tiling</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QCheckBox" name="useTilingCheckBox">
+        <property name="toolTip">
+         <string>Whan using tiling, a Rose diagram is generated for each polygon, and added to an output layer</string>
+        </property>
+        <property name="text">
+         <string>Use tiling</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="TilingLayer">
+        <property name="toolTip">
+         <string>The polygon layer to use for tiling</string>
         </property>
        </widget>
       </item>
@@ -163,7 +189,7 @@
           <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::MinimumExpanding</enum>
+          <enum>QSizePolicy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -276,7 +302,7 @@
       <enum>Qt::Vertical</enum>
      </property>
      <property name="sizeType">
-      <enum>QSizePolicy::MinimumExpanding</enum>
+      <enum>QSizePolicy::Fixed</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>

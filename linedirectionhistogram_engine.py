@@ -4,6 +4,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import QCoreApplication
 from qgis.core import QGis
 from qgis.core import QgsVectorLayer
+from qgis.core import QgsGeometry
 
 # Angles:
 # Real world angles are measured clockwise from the 12 o'clock
@@ -28,7 +29,8 @@ class Worker(QtCore.QObject):
     finished = QtCore.pyqtSignal(bool, object)
 
     def __init__(self, inputvectorlayer, bins, directionneutral,
-                                  offsetangle, selectedfeaturesonly):
+                                  offsetangle, selectedfeaturesonly,
+                                  tilelayer = None):
         """Initialise.
 
         Arguments:
@@ -42,6 +44,7 @@ class Worker(QtCore.QObject):
                                  angle
         selectedfeaturesonly -- (boolean) should only selected
                                  features be considered
+        tilelayer --            (QgsVectorLayer) The (polygon) tile layer
         """
 
         QtCore.QObject.__init__(self)  # Essential!
@@ -51,6 +54,7 @@ class Worker(QtCore.QObject):
         self.directionneutral = directionneutral
         self.offsetangle = offsetangle
         self.selectedfeaturesonly = selectedfeaturesonly
+        self.tilelayer = tilelayer
         self.binsize = 360.0 / bins
         if self.directionneutral:
             self.binsize = 180.0 / bins
@@ -99,13 +103,25 @@ class Worker(QtCore.QObject):
             self.increment = self.feature_count // 1000
             # Initialise the bins
             statistics = []
+            mybins = []
             for i in range(self.bins):
-                statistics.append([0.0, 0])
+                mybins.append([0.0, 0])
+            statistics.append(mybins)
             # Get the features (iterator)
             if self.selectedfeaturesonly:
                 features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
+            tilegeoms = []
+            if self.tilelayer is not None:
+                self.status.emit("Tiling!")
+                for tile in self.tilelayer.getFeatures():
+                    tilegeoms.append(tile.geometry())
+                for i in range(len(tilegeoms)):
+                    mybins = []
+                    for j in range(self.bins):
+                        mybins.append([0.0, 0])
+                    statistics.append(mybins)
             for feat in features:
                 # Allow user abort
                 if self.abort is True:
@@ -136,7 +152,27 @@ class Worker(QtCore.QObject):
                     for polygon in inputpolygons:
                         for ring in polygon:
                             inputlines.append(ring)
-                for inputlinegeom in inputlines:
+                self.status.emit("inputlines: " + str(inputlines))
+                # We introduce a vector of line geometries for the tiling
+                tilelines = [None] * (len(tilegeoms) + 1)
+                # Use the first element to store all the input lines
+                tilelines[0] = inputlines
+                # Clip the lines based on the tile layer
+                if self.tilelayer is not None:
+                    for i in range(len(tilegeoms)): # Go through the tiles
+                        newlines = []
+                        for linegeom in inputlines:
+                            #self.status.emit("linegeom: " + str(linegeom))
+                            cliplines = QgsGeometry.fromPolyline(linegeom).intersection(tilegeoms[i])
+                            #newlines.append(linegeom.intersection(tilegeoms[i]))
+                            newlines.append(cliplines.asPolyline())
+                        tilelines[i+1] = newlines
+                    self.status.emit("tilelines: " + str(tilelines))
+                # Lines for the feature have been extracted - do calculations
+                j = 0
+                for tileline2 in tilelines:
+                  #for inputlinegeom in inputlines:
+                  for inputlinegeom in tileline2:
                     # Skip degenerate lines
                     if inputlinegeom is None or len(inputlinegeom) < 2:
                         continue
@@ -162,11 +198,12 @@ class Worker(QtCore.QObject):
                         if fittingbin == self.bins:
                             fittingbin = 0
                         # Add to the length of the bin
-                        statistics[fittingbin][0] = (statistics[fittingbin][0]
+                        statistics[j][fittingbin][0] = (statistics[j][fittingbin][0]
                                                   + linelength)
                         # Add to the number of line segments in the bin
-                        statistics[fittingbin][1] = (statistics[fittingbin][1]
+                        statistics[j][fittingbin][1] = (statistics[j][fittingbin][1]
                                                   + 1)
+                    j = j + 1
                 self.calculate_progress()
         except:
             import traceback
