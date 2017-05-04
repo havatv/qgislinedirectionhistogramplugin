@@ -35,6 +35,7 @@ import os
 import csv
 import math
 import tempfile
+import random
 
 from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
@@ -52,6 +53,7 @@ from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsField, QgsFeature
+from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2, QgsSimpleFillSymbolLayerV2, QgsRendererCategoryV2
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
 
@@ -157,6 +159,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
         self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
         self.pointLayer = None
+        self.idfieldname = 'ID'
+        self.svgfiles = []
         self.result = None
 
     def startWorker(self):
@@ -193,7 +197,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.pointLayer = QgsVectorLayer('Point?crs=EPSG:4326',
                                        "SVGPoints", "memory")
             self.pointLayer.setCrs(tilelayer.crs())
-            self.pointLayer.dataProvider().addAttributes([QgsField("ID", QVariant.Int)])
+            self.pointLayer.dataProvider().addAttributes(
+                       [QgsField(self.idfieldname, QVariant.Int)])
             self.pointLayer.updateFields()
             id = 1
             for feature in tilelayer.getFeatures():
@@ -268,9 +273,40 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.drawHistogram()
                     tmpdir = tempfile.gettempdir()
                     tempfilepathprefix = tmpdir + '/qgisLDH_'
-                    filename = tempfilepathprefix + 'rose' + str(i) + '.svg'
+                    filename = tempfilepathprefix + 'rose' + str(i+1) + '.svg'
                     self.saveAsSVG(filename)
+                    self.svgfiles.append(filename)
                 #self.result = ret[2]
+
+
+            fni = self.pointLayer.fieldNameIndex(self.idfieldname)
+            unique_values = self.pointLayer.dataProvider().uniqueValues(fni)
+            categories = []
+            for unique_value in unique_values:
+                # initialize the default symbol for this geometry type
+                symbol = QgsSymbolV2.defaultSymbol(self.pointLayer.geometryType())
+                # configure a symbol layer
+                layer_style = {}
+                layer_style['color'] = '%d, %d, %d' % (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
+                layer_style['outline'] = '#000000'
+                symbol_layer = QgsSimpleFillSymbolLayerV2.create(layer_style)
+                # replace default symbol layer with the configured one
+                if symbol_layer is not None:
+                    symbol.changeSymbolLayer(0, symbol_layer)
+                # create renderer object
+                category = QgsRendererCategoryV2(unique_value, symbol, str(unique_value))
+                # entry for the list of category items
+                categories.append(category)
+            # create renderer object
+            renderer = QgsCategorizedSymbolRendererV2(self.idfieldname, categories)
+            if renderer is not None:
+                self.pointLayer.setRendererV2(renderer)
+
+            #renderer = self.pointLayer.rendererV2()
+            #newrenderer = QgsCategorizedSymbolRendererV2(self.idfieldname)
+            #self.showInfo("renderer type: " + renderer.type())
+            #self.showInfo("newrenderer type: " + newrenderer.type())
+            
             QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
             self.result = ret[0]
             # report the result
