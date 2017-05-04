@@ -34,6 +34,7 @@
 import os
 import csv
 import math
+import tempfile
 
 from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
@@ -263,9 +264,12 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 for i in range(len(ret)-1):
                     self.showInfo("Tile "+str(i+1)+": " + str(len(ret[i+1])))
                     self.showInfo("Elements: " + str(ret[i+1]))
-                    #self.result = ret[i+1]
-                    #self.drawHistogram()
-                    #self.saveAsPDF()
+                    self.result = ret[i+1]
+                    self.drawHistogram()
+                    tmpdir = tempfile.gettempdir()
+                    tempfilepathprefix = tmpdir + '/qgisLDH_'
+                    filename = tempfilepathprefix + 'rose' + str(i) + '.svg'
+                    self.saveAsSVG(filename)
                 #self.result = ret[2]
             QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
             self.result = ret[0]
@@ -618,9 +622,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         p.end()
 
     # Save to SVG
-    def saveAsSVG(self):
-        savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
-                                                       "", "*.svg"))
+    def saveAsSVG(self, location = None):
+        savename = location
+        if location is None:
+            savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
+"*.svg"))
         svgGen = QSvgGenerator()
         svgGen.setFileName(savename)
         svgGen.setSize(QSize(200, 200))

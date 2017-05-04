@@ -156,7 +156,7 @@ class Worker(QtCore.QObject):
                     for polygon in inputpolygons:
                         for ring in polygon:
                             inputlines.append(ring)
-                self.status.emit("inputlines: " + str(inputlines))
+                #self.status.emit("inputlines: " + str(inputlines))
                 # We introduce a vector of line geometries for the tiling
                 tilelines = [None] * (len(tilegeoms) + 1)
                 # Use the first element to store all the input lines
@@ -165,7 +165,7 @@ class Worker(QtCore.QObject):
                 if self.tilelayer is not None:
                     i = 0
                     for tile in tilegeoms: # Go through the tiles
-                        self.status.emit("tile: " + str(i+1))
+                        #self.status.emit("tile: " + str(i+1))
                         #self.status.emit("tilegeom: " + str(tilegeoms[i]))
                         #self.status.emit("tilegeom, type: " + str(tile.type()))
                         #if tile.type() == 2:
@@ -180,22 +180,23 @@ class Worker(QtCore.QObject):
 #                            clipres = QgsGeometry.fromPolyline(linegeom).intersection(tile)
                             clipres = qgsgeom.intersection(tile)
 
-                            self.status.emit("clipres: " + str(clipres.asPolyline()))
+                            #self.status.emit("clipres: " + str(clipres.asPolyline()))
                             #newlines.append(linegeom.intersection(tilegeoms[i]))
                             newlines.append(clipres.asPolyline())
                         tilelines[i+1] = newlines
                         i = i + 1
-                    self.status.emit("tilelines: " + str(tilelines))
+                    #self.status.emit("tilelines: " + str(tilelines))
                 # Lines for the feature have been extracted - do calculations
                 j = 0
                 for tileline2 in tilelines:
-                  self.status.emit("tile: " + str(j))
-                  self.status.emit("tilelines2: " + str(tileline2))
+                  #self.status.emit("tile: " + str(j))
+                  #self.status.emit("tilelines2: " + str(tileline2))
                   #for inputlinegeom in inputlines:
                   for inputlinegeom in tileline2:
-                    self.status.emit("inputlinegeom: " + str(inputlinegeom))
+                    #self.status.emit("inputlinegeom: " + str(inputlinegeom))
                     # Skip degenerate lines
                     if inputlinegeom is None or len(inputlinegeom) < 2:
+                        j = j + 1
                         continue
                     # Go through all the segments of this line
                     nextpoint = inputlinegeom[0]
@@ -218,7 +219,7 @@ class Worker(QtCore.QObject):
                         # Have to handle special case to keep index in range
                         if fittingbin == self.bins:
                             fittingbin = 0
-                        self.status.emit("fittingbin: " + str(fittingbin))
+                        #self.status.emit("fittingbin: " + str(fittingbin))
                         # Add to the length of the bin
                         statistics[j][fittingbin][0] = (statistics[j][fittingbin][0]
                                                   + linelength)
@@ -226,7 +227,7 @@ class Worker(QtCore.QObject):
                         statistics[j][fittingbin][1] = (statistics[j][fittingbin][1]
                                                   + 1)
                     j = j + 1
-                self.status.emit("stats: " + str(statistics))
+                #self.status.emit("stats: " + str(statistics))
                 self.calculate_progress()
         except:
             import traceback
