@@ -53,7 +53,8 @@ from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsField, QgsFeature
-from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2, QgsSimpleFillSymbolLayerV2, QgsRendererCategoryV2
+from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2, QgsSvgMarkerSymbolLayerV2,QgsRendererCategoryV2
+#QgsSimpleFillSymbolLayerV2, 
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
 
@@ -266,6 +267,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
                 self.showInfo("Several elements in the result: " + str(len(ret)))
+                self.svgfiles = [None] * (len(ret))
                 for i in range(len(ret)-1):
                     self.showInfo("Tile "+str(i+1)+": " + str(len(ret[i+1])))
                     self.showInfo("Elements: " + str(ret[i+1]))
@@ -275,40 +277,50 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     tempfilepathprefix = tmpdir + '/qgisLDH_'
                     filename = tempfilepathprefix + 'rose' + str(i+1) + '.svg'
                     self.saveAsSVG(filename)
-                    self.svgfiles.append(filename)
+                    #self.svgfiles.append(filename)
+                    self.svgfiles[i+1] = filename
                 #self.result = ret[2]
 
 
-            fni = self.pointLayer.fieldNameIndex(self.idfieldname)
-            unique_values = self.pointLayer.dataProvider().uniqueValues(fni)
-            categories = []
-            for unique_value in unique_values:
-                # initialize the default symbol for this geometry type
-                symbol = QgsSymbolV2.defaultSymbol(self.pointLayer.geometryType())
-                # configure a symbol layer
-                layer_style = {}
-                layer_style['color'] = '%d, %d, %d' % (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
-                layer_style['outline'] = '#000000'
-                symbol_layer = QgsSimpleFillSymbolLayerV2.create(layer_style)
-                # replace default symbol layer with the configured one
-                if symbol_layer is not None:
-                    symbol.changeSymbolLayer(0, symbol_layer)
-                # create renderer object
-                category = QgsRendererCategoryV2(unique_value, symbol, str(unique_value))
-                # entry for the list of category items
-                categories.append(category)
-            # create renderer object
-            renderer = QgsCategorizedSymbolRendererV2(self.idfieldname, categories)
-            if renderer is not None:
-                self.pointLayer.setRendererV2(renderer)
+                fni = self.pointLayer.fieldNameIndex(self.idfieldname)
+                unique_values = self.pointLayer.dataProvider().uniqueValues(fni)
+                categories = []
+                for unique_value in unique_values:
+                    self.showInfo("Unique value: " + str(unique_value))
+                    # initialize the default symbol for this geometry type
+                    symbol = QgsSymbolV2.defaultSymbol(self.pointLayer.geometryType())
+                    # configure a symbol layer
+                    layer_style = {}
 
-            #renderer = self.pointLayer.rendererV2()
-            #newrenderer = QgsCategorizedSymbolRendererV2(self.idfieldname)
-            #self.showInfo("renderer type: " + renderer.type())
-            #self.showInfo("newrenderer type: " + newrenderer.type())
+                    layer_style['fill'] = '#ffffff'
+                    layer_style['name'] = self.svgfiles[int(unique_value)]
+                    layer_style['outline'] = '#000000'
+                    layer_style['outline-width'] = '6.8'
+                    layer_style['size'] = '20'
+
+
+                    #layer_style['color'] = '%d, %d, %d' % (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
+                    symbol_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
+                    #symbol_layer = QgsSimpleFillSymbolLayerV2.create(layer_style)
+                    # replace default symbol layer with the configured one
+                    if symbol_layer is not None:
+                        symbol.changeSymbolLayer(0, symbol_layer)
+                    # create renderer object
+                    category = QgsRendererCategoryV2(unique_value, symbol, str(unique_value))
+                    # entry for the list of category items
+                    categories.append(category)
+                # create renderer object
+                renderer = QgsCategorizedSymbolRendererV2(self.idfieldname, categories)
+                if renderer is not None:
+                    self.pointLayer.setRendererV2(renderer)
+
+                #renderer = self.pointLayer.rendererV2()
+                #newrenderer = QgsCategorizedSymbolRendererV2(self.idfieldname)
+                #self.showInfo("renderer type: " + renderer.type())
+                #self.showInfo("newrenderer type: " + newrenderer.type())
             
-            QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
-            self.result = ret[0]
+                QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
+                self.result = ret[0]
             # report the result
             # As a CSV file:
             if self.outputfilename != "":
