@@ -53,8 +53,8 @@ from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsField, QgsFeature
-from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2, QgsSvgMarkerSymbolLayerV2,QgsRendererCategoryV2
-#QgsSimpleFillSymbolLayerV2, 
+from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2,
+from qgis.core import QgsSvgMarkerSymbolLayerV2, QgsRendererCategoryV2
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
 
@@ -269,30 +269,34 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if ok and ret is not None:
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
-                self.showInfo("Several elements in the result: " + str(len(ret)))
+                self.showInfo("Several elements in the result: " +
+                              str(len(ret)))
                 self.svgfiles = [None] * (len(ret))
-                for i in range(len(ret)-1):
-                    self.showInfo("Tile "+str(i+1)+": " + str(len(ret[i+1])))
-                    self.showInfo("Elements: " + str(ret[i+1]))
-                    self.result = ret[i+1]
+                for i in range(len(ret) - 1):
+                    self.showInfo("Tile " + str(i + 1) + ": " +
+                                  str(len(ret[i + 1])))
+                    self.showInfo("Elements: " + str(ret[i + 1]))
+                    self.result = ret[i + 1]
                     self.drawHistogram()
                     tmpdir = tempfile.gettempdir()
                     if self.tileDirectory.text():
                         tmpdir = self.tileDirectory.text()
                     tempfilepathprefix = tmpdir + '/qgisLDH_'
-                    filename = tempfilepathprefix + 'rose' + str(i+1) + '.svg'
+                    filename = (tempfilepathprefix + 'rose' +
+                                str(i + 1) + '.svg')
                     self.saveAsSVG(filename)
                     #self.svgfiles.append(filename)
-                    self.svgfiles[i+1] = filename
+                    self.svgfiles[i + 1] = filename
                 #self.result = ret[2]
 
                 # Create the SVG symbol renderer
+                # Get the unique values for the ID field
                 fni = self.pointLayer.fieldNameIndex(self.idfieldname)
-                unique_values = self.pointLayer.dataProvider().uniqueValues(fni)
-                categories = []
-                for val in unique_values:
-                    #self.showInfo("Unique value: " + str(val))
-                    # initialize the default symbol for this geometry type
+                uniq_vals = self.pointLayer.dataProvider().uniqueValues(fni)
+                categories = []  # For renderer categories
+                # Create the symbols for each unique ID value
+                for val in uniq_vals:
+                    # initialize with the default symbol for this geom type
                     symbol = QgsSymbolV2.defaultSymbol(
                                 self.pointLayer.geometryType())
                     # configure a symbol layer
@@ -302,18 +306,21 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     layer_style['outline'] = '#000000'
                     layer_style['outline-width'] = '6.8'
                     layer_style['size'] = '50'
-                    #layer_style['color'] = '%d, %d, %d' % (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
-                    symbol_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
-                    #symbol_layer = QgsSimpleFillSymbolLayerV2.create(layer_style)
+                    #layer_style['color'] = '%d, %d, %d' % (
+                    #                          random.randrange(0,256),
+                    #                          random.randrange(0,256),
+                    #                          random.randrange(0,256))
+                    sym_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
                     # replace default symbol layer with the configured one
-                    if symbol_layer is not None:
-                        symbol.changeSymbolLayer(0, symbol_layer)
+                    if sym_layer is not None:
+                        symbol.changeSymbolLayer(0, sym_layer)
                     # create renderer object
                     category = QgsRendererCategoryV2(val, symbol, str(val))
                     # entry for the list of category items
                     categories.append(category)
                 # create renderer object
-                renderer = QgsCategorizedSymbolRendererV2(self.idfieldname, categories)
+                renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
+                                                          categories)
                 if renderer is not None:
                     self.pointLayer.setRendererV2(renderer)
 
@@ -321,35 +328,35 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 #newrenderer = QgsCategorizedSymbolRendererV2(self.idfieldname)
                 #self.showInfo("renderer type: " + renderer.type())
                 #self.showInfo("newrenderer type: " + newrenderer.type())
-            
+
                 QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
                 self.result = ret[0]
             # report the result
             # As a CSV file:
             if self.outputfilename != "":
-                    try:
-                        with open(self.outputfilename, 'wb') as csvfile:
-                            csvwriter = csv.writer(csvfile, delimiter=';',
-                                        quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                            csvwriter.writerow(["StartAngle", "EndAngle",
-                                                "Length", "Number"])
-                            for i in range(len(ret)):
-                                if self.directionneutral:
-                                    angle = (i * 180.0 / self.bins +
-                                                   self.offsetangle)
-                                    csvwriter.writerow([angle,
-                                                       angle + 180.0 / self.bins,
-                                                       ret[i][0], ret[i][1]])
-                                else:
-                                    angle = (i * 360.0 / self.bins +
-                                                             self.offsetangle)
-                                    csvwriter.writerow([angle,
-                                                   angle + 360.0 / self.bins,
+                try:
+                    with open(self.outputfilename, 'wb') as csvfile:
+                        csvwriter = csv.writer(csvfile, delimiter=';',
+                                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                        csvwriter.writerow(["StartAngle", "EndAngle",
+                                            "Length", "Number"])
+                        for i in range(len(ret)):
+                            if self.directionneutral:
+                                angle = (i * 180.0 / self.bins +
+                                               self.offsetangle)
+                                csvwriter.writerow([angle,
+                                                   angle + 180.0 / self.bins,
                                                    ret[i][0], ret[i][1]])
-                        with open(self.outputfilename + 't', 'wb') as csvtfile:
-                            csvtfile.write('"Real","Real","Real","Integer"')
-                    except IOError, e:
-                        self.showInfo("Trouble writing the CSV file: " + str(e))
+                            else:
+                                angle = (i * 360.0 / self.bins +
+                                                         self.offsetangle)
+                                csvwriter.writerow([angle,
+                                               angle + 360.0 / self.bins,
+                                               ret[i][0], ret[i][1]])
+                    with open(self.outputfilename + 't', 'wb') as csvtfile:
+                        csvtfile.write('"Real","Real","Real","Integer"')
+                except IOError, e:
+                    self.showInfo("Trouble writing the CSV file: " + str(e))
             # Draw the histogram
             self.drawHistogram()
         else:  # No data returned
@@ -677,7 +684,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         p.end()
 
     # Save to SVG
-    def saveAsSVG(self, location = None):
+    def saveAsSVG(self, location=None):
         savename = location
         if location is None:
             savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
@@ -712,6 +719,7 @@ def saveCSVDialog(parent):
             settings.setValue(key, tryDir)
         return outFilePath
 
+
 def findTileDialog(parent):
         """Shows a file dialog and return the selected file path."""
         settings = QSettings()
@@ -728,4 +736,3 @@ def findTileDialog(parent):
             outDir = os.path.dirname(outFilePath)
             settings.setValue(key, outDir)
         return outFilePath
-

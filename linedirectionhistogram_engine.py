@@ -30,7 +30,7 @@ class Worker(QtCore.QObject):
 
     def __init__(self, inputvectorlayer, bins, directionneutral,
                                   offsetangle, selectedfeaturesonly,
-                                  tilelayer = None):
+                                  tilelayer=None):
         """Initialise.
 
         Arguments:
@@ -117,7 +117,8 @@ class Worker(QtCore.QObject):
             if self.tilelayer is not None:
                 self.status.emit("Tiling!")
                 for tile in self.tilelayer.getFeatures():
-                    self.status.emit("tile geom: " + str(tile.geometry().asPolygon()))
+                    self.status.emit("tile geom: " +
+                                     str(tile.geometry().asPolygon()))
                     # Add the tile geometry to the vector
                     tilegeoms.append(QgsGeometry(tile.geometry()))
                 # Create a vector to store the bins for the tiles
@@ -164,28 +165,14 @@ class Worker(QtCore.QObject):
                 # Clip the lines based on the tile layer
                 if self.tilelayer is not None:
                     i = 0
-                    for tile in tilegeoms: # Go through the tiles
-                        #self.status.emit("tile: " + str(i+1))
-                        #self.status.emit("tilegeom: " + str(tilegeoms[i]))
-                        #self.status.emit("tilegeom, type: " + str(tile.type()))
-                        #if tile.type() == 2:
-                            #self.status.emit("tilegeom: " + str(tile.asPolyline()))
-                            #self.status.emit("tilegeom: " + str(tile.asPolygon()))
-                        #self.status.emit("tilegeom: " + str(tile))
+                    for tile in tilegeoms:  # Go through the tiles
                         newlines = []
                         for linegeom in inputlines:
-                            #self.status.emit("linegeom: " + str(linegeom))
                             qgsgeom = QgsGeometry.fromPolyline(linegeom)
-                            #self.status.emit("linegeom2: " + str(qgsgeom.asPolyline()))
-#                            clipres = QgsGeometry.fromPolyline(linegeom).intersection(tile)
                             clipres = qgsgeom.intersection(tile)
-
-                            #self.status.emit("clipres: " + str(clipres.asPolyline()))
-                            #newlines.append(linegeom.intersection(tilegeoms[i]))
                             newlines.append(clipres.asPolyline())
-                        tilelines[i+1] = newlines
+                        tilelines[i + 1] = newlines
                         i = i + 1
-                    #self.status.emit("tilelines: " + str(tilelines))
                 # Lines for the feature have been extracted - do calculations
                 j = 0
                 for tileline2 in tilelines:
@@ -208,23 +195,23 @@ class Worker(QtCore.QObject):
                         lineangle = (thispoint.azimuth(nextpoint)
                                      - self.offsetangle)
                         # Find the bin
-                        fittingbin = (int(((lineangle + 180)) / self.binsize)
+                        fitbin = (int(((lineangle + 180)) / self.binsize)
                                       % self.bins)
                         if self.directionneutral:
                             if lineangle < 0.0:
                                 lineangle = 180.0 + lineangle
                             # Find the bin
-                            fittingbin = (int((lineangle) / self.binsize)
+                            fitbin = (int((lineangle) / self.binsize)
                                           % self.bins)
                         # Have to handle special case to keep index in range
-                        if fittingbin == self.bins:
-                            fittingbin = 0
-                        #self.status.emit("fittingbin: " + str(fittingbin))
+                        if fitbin == self.bins:
+                            fitbin = 0
+                        #self.status.emit("fitbin: " + str(fitbin))
                         # Add to the length of the bin
-                        statistics[j][fittingbin][0] = (statistics[j][fittingbin][0]
+                        statistics[j][fitbin][0] = (statistics[j][fitbin][0]
                                                   + linelength)
                         # Add to the number of line segments in the bin
-                        statistics[j][fittingbin][1] = (statistics[j][fittingbin][1]
+                        statistics[j][fitbin][1] = (statistics[j][fitbin][1]
                                                   + 1)
                     j = j + 1
                 #self.status.emit("stats: " + str(statistics))
