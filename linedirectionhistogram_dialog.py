@@ -274,39 +274,34 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # The first element is always the over all histogram
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
-                #self.showInfo("Several elements in the result: " +
-                #              str(len(ret)))
-                self.svgfiles = [None] * (len(ret))
+                # Initialise the vector of SVG files
+                self.svgfiles = [None] * len(ret)
+                # Determine the directory for storing the SVG files
+                tmpdir = tempfile.gettempdir()
+                if self.tileDirectory.text():
+                    tmpdir = self.tileDirectory.text()
+                # Set the prefix for the SVG files
+                tempfilepathprefix = tmpdir + '/qgisLDH_'
+                categories = []  # Renderer categories
+                # Create the SVG files and symbols for the tiles
                 for i in range(len(ret) - 1):
-                    #self.showInfo("Tile " + str(i + 1) + ": " +
-                    #              str(len(ret[i + 1])))
-                    #self.showInfo("Elements: " + str(ret[i + 1]))
+                    # Set the global result variable to be used for
+                    # drawing the histogram
                     self.result = ret[i + 1]
                     self.drawHistogram()
-                    tmpdir = tempfile.gettempdir()
-                    if self.tileDirectory.text():
-                        tmpdir = self.tileDirectory.text()
-                    tempfilepathprefix = tmpdir + '/qgisLDH_'
+                    # Set the file name (and directory) for the SVG file
                     filename = (tempfilepathprefix + 'rose' +
                                 str(i + 1) + '.svg')
                     self.saveAsSVG(filename)
                     self.svgfiles[i + 1] = filename
-                #self.result = ret[2]
-
-                # Create the SVG symbol renderer
-                # Get the unique values for the ID field
-                fni = self.roseLayer.fieldNameIndex(self.idfieldname)
-                uniq_vals = self.roseLayer.dataProvider().uniqueValues(fni)
-                categories = []  # For renderer categories
-                # Create the symbols for each unique ID value
-                for val in uniq_vals:
+                    ## Create the symbol for this ID value
                     # initialize with the default symbol for this geom type
                     symbol = QgsSymbolV2.defaultSymbol(
                                 self.roseLayer.geometryType())
-                    # configure a symbol layer
+                    # configure an (SVG) symbol layer
                     layer_style = {}
                     layer_style['fill'] = '#ffffff'
-                    layer_style['name'] = self.svgfiles[int(val)]
+                    layer_style['name'] = filename
                     layer_style['outline'] = '#000000'
                     layer_style['outline-width'] = '6.8'
                     layer_style['size'] = '20'
@@ -314,19 +309,18 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     # replace default symbol layer with the configured one
                     if sym_layer is not None:
                         symbol.changeSymbolLayer(0, sym_layer)
-                    # create renderer object
-                    category = QgsRendererCategoryV2(val, symbol, str(val))
-                    # entry for the list of category items
+                    # create renderer category
+                    category = QgsRendererCategoryV2(i+1, symbol, str(i+1))
                     categories.append(category)
-                # create renderer object
+                # create categorized renderer object
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
                                                           categories)
                 if renderer is not None:
                     self.roseLayer.setRendererV2(renderer)
                 QgsMapLayerRegistry.instance().addMapLayer(self.roseLayer)
+                # Set the result to the over all histogram
                 self.result = ret[0]
-            # report the result
-            # As a CSV file:
+            # Shall the result be reported (as a CSV file):
             if self.outputfilename != "":
                 try:
                     with open(self.outputfilename, 'wb') as csvfile:
