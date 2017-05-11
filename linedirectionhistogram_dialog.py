@@ -718,9 +718,6 @@ def findTileDialog(parent):
                        parent.tr('Directory for SVGs'), outDir)
         outFilePath = unicode(outFilePath)
         if outFilePath:
-            #root, ext = os.path.splitext(outFilePath)
-            #if ext.upper() != '.CSV':
-            #    outFilePath = '%s.csv' % outFilePath
             outDir = os.path.dirname(outFilePath)
             settings.setValue(key, outDir)
         return outFilePath
