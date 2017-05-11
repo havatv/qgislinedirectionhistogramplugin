@@ -101,18 +101,20 @@ class Worker(QtCore.QObject):
                 self.finished.emit(False, None)
                 return
             self.increment = self.feature_count // 1000
-            # Initialise the bins
+            # Initialise the result vector
             statistics = []
+            # Initialise the bins for the over all result
             mybins = []
             for i in range(self.bins):
                 mybins.append([0.0, 0])
+            # Add the over all bins
             statistics.append(mybins)
             # Get the features (iterator)
             if self.selectedfeaturesonly:
                 features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
-            # Create a vector of the tile (Polygon) geometries
+            # Create a vector of the (possible) tile (Polygon) geometries
             tilegeoms = []
             if self.tilelayer is not None:
                 self.status.emit("Tiling!")
@@ -121,7 +123,7 @@ class Worker(QtCore.QObject):
                     #                 str(tile.geometry().asPolygon()))
                     # Add the tile geometry to the vector
                     tilegeoms.append(QgsGeometry(tile.geometry()))
-                # Create a vector to store the bins for the tiles
+                # Initialise and add bins for all the tiles
                 for i in range(len(tilegeoms)):
                     mybins = []
                     for j in range(self.bins):
@@ -131,6 +133,8 @@ class Worker(QtCore.QObject):
                 # Allow user abort
                 if self.abort is True:
                     break
+                ## Prepare for the histogram creation by extracting
+                ## line geometries from the input layer
                 # We use a vector of polygon geometries to be able to
                 # handle MultiPolygons
                 inputpolygons = []
@@ -157,30 +161,29 @@ class Worker(QtCore.QObject):
                     for polygon in inputpolygons:
                         for ring in polygon:
                             inputlines.append(ring)
-                #self.status.emit("inputlines: " + str(inputlines))
                 # We introduce a vector of line geometries for the tiling
-                tilelines = [None] * (len(tilegeoms) + 1)
+                tilelinecoll = [None] * (len(tilegeoms) + 1)
                 # Use the first element to store all the input lines
-                tilelines[0] = inputlines
+                # (for the over all histogram)
+                tilelinecoll[0] = inputlines
                 # Clip the lines based on the tile layer
                 if self.tilelayer is not None:
                     i = 0
                     for tile in tilegeoms:  # Go through the tiles
                         newlines = []
                         for linegeom in inputlines:
+                            # Create a geometry for the overlay
                             qgsgeom = QgsGeometry.fromPolyline(linegeom)
+                            # Clip
                             clipres = qgsgeom.intersection(tile)
                             newlines.append(clipres.asPolyline())
-                        tilelines[i + 1] = newlines
+                        tilelinecoll[i + 1] = newlines
                         i = i + 1
-                # Lines for the feature have been extracted - do calculations
+                ## Lines have been extracted from the feature
+                ## - do calculations
                 j = 0
-                for tileline2 in tilelines:
-                  #self.status.emit("tile: " + str(j))
-                  #self.status.emit("tilelines2: " + str(tileline2))
-                  #for inputlinegeom in inputlines:
-                  for inputlinegeom in tileline2:
-                    #self.status.emit("inputlinegeom: " + str(inputlinegeom))
+                for tilelines in tilelinecoll:
+                  for inputlinegeom in tilelines:
                     # Skip degenerate lines
                     if inputlinegeom is None or len(inputlinegeom) < 2:
                         j = j + 1
@@ -206,15 +209,13 @@ class Worker(QtCore.QObject):
                         # Have to handle special case to keep index in range
                         if fitbin == self.bins:
                             fitbin = 0
-                        #self.status.emit("fitbin: " + str(fitbin))
-                        # Add to the length of the bin
+                        # Add to the length of the bin of this tile (j)
                         statistics[j][fitbin][0] = (statistics[j][fitbin][0]
                                                   + linelength)
                         # Add to the number of line segments in the bin
                         statistics[j][fitbin][1] = (statistics[j][fitbin][1]
                                                   + 1)
                     j = j + 1
-                #self.status.emit("stats: " + str(statistics))
                 self.calculate_progress()
         except:
             import traceback
