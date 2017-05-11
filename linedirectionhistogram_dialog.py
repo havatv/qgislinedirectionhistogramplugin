@@ -331,7 +331,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                         for i in range(len(ret)):
                             if self.directionneutral:
                                 angle = (i * 180.0 / self.bins +
-                                               self.offsetangle)
+                                                self.offsetangle)
                                 csvwriter.writerow([angle,
                                                    angle + 180.0 / self.bins,
                                                    ret[i][0], ret[i][1]])
@@ -694,17 +694,17 @@ def saveCSVDialog(parent):
         """Shows a file dialog and return the selected file path."""
         settings = QSettings()
         key = '/UI/lastShapefileDir'
-        tryDir = settings.value(key)
+        outDir = settings.value(key)
         filter = 'Comma Separated Value (*.csv)'
         outFilePath = QFileDialog.getSaveFileName(parent,
-                       parent.tr('Output CSV file'), tryDir, filter)
+                       parent.tr('Output CSV file'), outDir, filter)
         outFilePath = unicode(outFilePath)
         if outFilePath:
             root, ext = os.path.splitext(outFilePath)
             if ext.upper() != '.CSV':
                 outFilePath = '%s.csv' % outFilePath
-            tryDir = os.path.dirname(outFilePath)
-            settings.setValue(key, tryDir)
+            outDir = os.path.dirname(outFilePath)
+            settings.setValue(key, outDir)
         return outFilePath
 
 
