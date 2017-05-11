@@ -35,6 +35,7 @@ import os
 import csv
 import math
 import tempfile  # rose diagram SVG files for rose layer rendering
+import uuid   # for generating unique file names (QGIS bug #13565)
 
 from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
@@ -281,7 +282,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 if self.tileDirectory.text():
                     tmpdir = self.tileDirectory.text()
                 # Set the prefix for the SVG files
-                tempfilepathprefix = tmpdir + '/qgisLDH_'
+                #tempfilepathprefix = tmpdir + '/qgisLDH_'
+                tempfilepathprefix = (tmpdir + '/qgisLDH_rose_' +
+                                      str(uuid.uuid4()))
                 categories = []  # Renderer categories
                 # Create the SVG files and symbols for the tiles
                 for i in range(len(ret) - 1):
@@ -290,8 +293,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.result = ret[i + 1]
                     self.drawHistogram()
                     # Set the file name (and directory) for the SVG file
-                    filename = (tempfilepathprefix + 'rose' +
-                                str(i + 1) + '.svg')
+                    filename = (tempfilepathprefix + str(i + 1) + '.svg')
                     self.saveAsSVG(filename)
                     self.svgfiles[i + 1] = filename
                     ## Create the symbol for this ID value
