@@ -117,8 +117,8 @@ class Worker(QtCore.QObject):
             if self.tilelayer is not None:
                 self.status.emit("Tiling!")
                 for tile in self.tilelayer.getFeatures():
-                    self.status.emit("tile geom: " +
-                                     str(tile.geometry().asPolygon()))
+                    #self.status.emit("tile geom: " +
+                    #                 str(tile.geometry().asPolygon()))
                     # Add the tile geometry to the vector
                     tilegeoms.append(QgsGeometry(tile.geometry()))
                 # Create a vector to store the bins for the tiles

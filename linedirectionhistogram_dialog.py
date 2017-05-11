@@ -34,8 +34,7 @@
 import os
 import csv
 import math
-import tempfile
-import random
+import tempfile  # rose diagram SVG files for rose layer rendering
 
 from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
@@ -53,7 +52,7 @@ from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsField, QgsFeature
-from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2,
+from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2
 from qgis.core import QgsSvgMarkerSymbolLayerV2, QgsRendererCategoryV2
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
@@ -132,7 +131,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.saveAsSVGButton.setEnabled(False)
         self.copyToClipboardButton.setEnabled(False)
         cancelButton.setEnabled(True)
-        #self.tileDirectory.
+
         #self.iface.legendInterface().itemAdded.connect(
         #    self.layerlistchanged)
         #self.iface.legendInterface().itemRemoved.connect(
@@ -162,9 +161,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             maxoffsetangle = int(maxoffsetangle / 2)
         self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
         self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
-        self.pointLayer = None
+        # Layer for the rose diagrams based on the input polygon tiles
+        self.roseLayer = None
+        # ID field name - constant
         self.idfieldname = 'ID'
-        self.svgfiles = []
+        self.svgfiles = []  # Array of SVG files - first element is None
         self.result = None
 
     def startWorker(self):
@@ -187,31 +188,34 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.directionneutral = True
         self.offsetangle = self.offsetAngleSpinBox.value()
         tilelayer = None
+        # If a tiling layer is used, create rose diagram layer
         if self.useTilingCheckBox.isChecked():
             layerindex = self.TilingLayer.currentIndex()
             layerId = self.TilingLayer.itemData(layerindex)
             tilelayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
             if tilelayer is None:
                 self.showError(self.tr('No tile layer defined'))
+                self.histscene.clear()
                 return
             if tilelayer.featureCount() == 0:
                 self.showError(self.tr('No features in tile layer'))
                 self.histscene.clear()
                 return
-            self.pointLayer = QgsVectorLayer('Point?crs=EPSG:4326',
-                                       "SVGPoints", "memory")
-            self.pointLayer.setCrs(tilelayer.crs())
-            self.pointLayer.dataProvider().addAttributes(
+            self.roseLayer = QgsVectorLayer('Point?crs=EPSG:4326',
+                                       "RoseDiagrams", "memory")
+            self.roseLayer.setCrs(tilelayer.crs())
+            # Add the ID field / attribute
+            self.roseLayer.dataProvider().addAttributes(
                        [QgsField(self.idfieldname, QVariant.Int)])
-            self.pointLayer.updateFields()
+            self.roseLayer.updateFields()
+            # Add the IDs [1..number of "tiles"]
             id = 1
             for feature in tilelayer.getFeatures():
                 newfeature = QgsFeature()
-                #centroid = newfeature.geometry().centroid()
                 centroid = feature.geometry().pointOnSurface()
                 newfeature.setGeometry(centroid)
                 newfeature.setAttributes([id])
-                self.pointLayer.dataProvider().addFeatures([newfeature])
+                self.roseLayer.dataProvider().addFeatures([newfeature])
                 id = id + 1
         # create a new worker instance
         worker = Worker(inputlayer, self.bins, self.directionneutral,
@@ -267,15 +271,16 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # 3) A vector with several elements: Create a layer
         #                                    with rose diagrams as symbols
         if ok and ret is not None:
+            # The first element is always the over all histogram
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
-                self.showInfo("Several elements in the result: " +
-                              str(len(ret)))
+                #self.showInfo("Several elements in the result: " +
+                #              str(len(ret)))
                 self.svgfiles = [None] * (len(ret))
                 for i in range(len(ret) - 1):
-                    self.showInfo("Tile " + str(i + 1) + ": " +
-                                  str(len(ret[i + 1])))
-                    self.showInfo("Elements: " + str(ret[i + 1]))
+                    #self.showInfo("Tile " + str(i + 1) + ": " +
+                    #              str(len(ret[i + 1])))
+                    #self.showInfo("Elements: " + str(ret[i + 1]))
                     self.result = ret[i + 1]
                     self.drawHistogram()
                     tmpdir = tempfile.gettempdir()
@@ -285,31 +290,26 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     filename = (tempfilepathprefix + 'rose' +
                                 str(i + 1) + '.svg')
                     self.saveAsSVG(filename)
-                    #self.svgfiles.append(filename)
                     self.svgfiles[i + 1] = filename
                 #self.result = ret[2]
 
                 # Create the SVG symbol renderer
                 # Get the unique values for the ID field
-                fni = self.pointLayer.fieldNameIndex(self.idfieldname)
-                uniq_vals = self.pointLayer.dataProvider().uniqueValues(fni)
+                fni = self.roseLayer.fieldNameIndex(self.idfieldname)
+                uniq_vals = self.roseLayer.dataProvider().uniqueValues(fni)
                 categories = []  # For renderer categories
                 # Create the symbols for each unique ID value
                 for val in uniq_vals:
                     # initialize with the default symbol for this geom type
                     symbol = QgsSymbolV2.defaultSymbol(
-                                self.pointLayer.geometryType())
+                                self.roseLayer.geometryType())
                     # configure a symbol layer
                     layer_style = {}
                     layer_style['fill'] = '#ffffff'
                     layer_style['name'] = self.svgfiles[int(val)]
                     layer_style['outline'] = '#000000'
                     layer_style['outline-width'] = '6.8'
-                    layer_style['size'] = '50'
-                    #layer_style['color'] = '%d, %d, %d' % (
-                    #                          random.randrange(0,256),
-                    #                          random.randrange(0,256),
-                    #                          random.randrange(0,256))
+                    layer_style['size'] = '20'
                     sym_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
                     # replace default symbol layer with the configured one
                     if sym_layer is not None:
@@ -322,14 +322,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
                                                           categories)
                 if renderer is not None:
-                    self.pointLayer.setRendererV2(renderer)
-
-                #renderer = self.pointLayer.rendererV2()
-                #newrenderer = QgsCategorizedSymbolRendererV2(self.idfieldname)
-                #self.showInfo("renderer type: " + renderer.type())
-                #self.showInfo("newrenderer type: " + newrenderer.type())
-
-                QgsMapLayerRegistry.instance().addMapLayer(self.pointLayer)
+                    self.roseLayer.setRendererV2(renderer)
+                QgsMapLayerRegistry.instance().addMapLayer(self.roseLayer)
                 self.result = ret[0]
             # report the result
             # As a CSV file:
