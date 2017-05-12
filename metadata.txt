@@ -21,7 +21,7 @@ email=havard.tveite@nmbu.no
 # Uncomment the following line and add your changelog:
 changelog=2.0
     -- Added option to generate a point layer with rose diagrams based on tiles provided through a polygon layer (#10)
-    -- Set the default state for "selected features only" based on the presence of a selection
+    -- Set the default state for "selected features only" based on the presence of a selection (#12)
     1.6
     -- Fixed progressbar issue (#9)
     1.5
