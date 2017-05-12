@@ -127,6 +127,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.saveAsPDFButton.clicked.connect(self.saveAsPDF)
         self.saveAsSVGButton.clicked.connect(self.saveAsSVG)
         self.copyToClipboardButton.clicked.connect(self.copyToClipboard)
+        self.InputLayer.currentIndexChanged.connect(self.inputLayerChanged)
 
         self.saveAsPDFButton.setEnabled(False)
         self.saveAsSVGButton.setEnabled(False)
@@ -595,7 +596,24 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     #    for i in range(self.InputLayer.count()):
     #        if self.InputLayer.itemData(i) == inputlayerid:
     #            self.InputLayer.setCurrentIndex(i)
-    #    self.layerlistchanging = False
+    #   self.layerlistchanging = False
+
+    def inputLayerChanged(self):
+        layerindex = self.InputLayer.currentIndex()
+        layerId = self.InputLayer.itemData(layerindex)
+        inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+        if inputlayer is None:
+            self.showInfo(self.tr('No input layer defined'))
+            return
+        if inputlayer.featureCount() == 0:
+            self.showInfo(self.tr('No features in input layer'))
+            return
+        # If there are no selected features, the "selected features
+        # only" checkbox should be unchecked
+        if inputlayer.selectedFeatureCount() == 0:
+            self.selectedFeaturesCheckBox.setChecked(False)
+        else:
+            self.selectedFeaturesCheckBox.setChecked(True)
 
     def showError(self, text):
         """Show an error."""
