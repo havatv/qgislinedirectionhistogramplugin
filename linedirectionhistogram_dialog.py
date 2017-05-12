@@ -313,7 +313,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     if sym_layer is not None:
                         symbol.changeSymbolLayer(0, sym_layer)
                     # create renderer category
-                    category = QgsRendererCategoryV2(i+1, symbol, str(i+1))
+                    category = QgsRendererCategoryV2(i + 1, symbol,
+                                                     str(i + 1))
                     categories.append(category)
                 # create categorized renderer object
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,

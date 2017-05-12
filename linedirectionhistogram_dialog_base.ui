@@ -286,7 +286,7 @@
               <item>
                <widget class="QCheckBox" name="useTilingCheckBox">
                 <property name="toolTip">
-                 <string>Whan using tiling, a Rose diagram is generated for each polygon, and added to an output layer</string>
+                 <string>Whan using tiling, a rose diagram is generated for each polygon, and added to an output layer</string>
                 </property>
                 <property name="text">
                  <string>Use tiling</string>
@@ -355,8 +355,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>451</width>
-             <height>135</height>
+             <width>195</width>
+             <height>83</height>
             </rect>
            </property>
            <attribute name="label">

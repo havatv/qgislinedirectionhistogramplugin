@@ -3,7 +3,7 @@
 <context>
     <name>Worker</name>
     <message>
-        <location filename="linedirectionhistogram_engine.py" line="79"/>
+        <location filename="linedirectionhistogram_engine.py" line="83"/>
         <source>No input layer defined</source>
         <translation>Inndatasett mangler</translation>
     </message>
@@ -19,64 +19,74 @@
 <context>
     <name>linedirectionhistogramDialog</name>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="72"/>
+        <location filename="linedirectionhistogram_dialog.py" line="79"/>
         <source>LineDirectionHistogram</source>
         <translation>Linjeretningshistogram</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="73"/>
+        <location filename="linedirectionhistogram_dialog.py" line="80"/>
         <source>Browse</source>
         <translation>Browse</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="74"/>
+        <location filename="linedirectionhistogram_dialog.py" line="81"/>
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="76"/>
+        <location filename="linedirectionhistogram_dialog.py" line="83"/>
         <source>Close</source>
         <translation>Avslutt</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="77"/>
+        <location filename="linedirectionhistogram_dialog.py" line="84"/>
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="164"/>
+        <location filename="linedirectionhistogram_dialog.py" line="607"/>
         <source>No input layer defined</source>
         <translation>Inndatasett mangler</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="256"/>
+        <location filename="linedirectionhistogram_dialog.py" line="357"/>
         <source>Aborted</source>
         <translation>Avbrutt</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="258"/>
+        <location filename="linedirectionhistogram_dialog.py" line="359"/>
         <source>No histogram created</source>
         <translation>Histogrammet ble ikke generert</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="279"/>
+        <location filename="linedirectionhistogram_dialog.py" line="380"/>
         <source>Worker</source>
         <translation>Arbeider</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="287"/>
+        <location filename="linedirectionhistogram_dialog.py" line="388"/>
         <source>Killing worker</source>
         <translation>Dreper arbeidsprosessen</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="167"/>
+        <location filename="linedirectionhistogram_dialog.py" line="610"/>
         <source>No features in input layer</source>
         <translation>Innlaget inneholder ingen objekter</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="75"/>
+        <location filename="linedirectionhistogram_dialog.py" line="82"/>
         <source>Help</source>
         <translation>Hjelp</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog.py" line="199"/>
+        <source>No tile layer defined</source>
+        <translation>Flislag mangler</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog.py" line="203"/>
+        <source>No features in tile layer</source>
+        <translation>Flislaget inneholder ingen objekter</translation>
     </message>
 </context>
 <context>
@@ -87,122 +97,167 @@
         <translation>Histogram for linjesegmentretning</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="20"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="25"/>
         <source>Input line or polygon layer</source>
         <translation>Inndatasett (linje eller polygon)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="74"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="91"/>
         <source>Assign line segments with opposite directions to the same bin</source>
         <translation>Plasser linjesegment med motsatt retning i samme &quot;bøtte&quot;</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="77"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="94"/>
         <source>0-180 (&quot;orientation&quot; neutral)</source>
         <translation>0-180 (orienteringsnøytral)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="104"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="121"/>
         <source>Number of bins:</source>
         <translation>Antall &quot;bøtter&quot;</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="111"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="128"/>
         <source>Number of direction bins to use</source>
         <translation>Antall retningbøtter</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="141"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="158"/>
         <source>Angle offset</source>
         <translation>Vinkeljustering</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="148"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="165"/>
         <source>Angle offset in degrees, positive clockwise</source>
         <translation>Vinkeljustering i grader, positivt med klokka</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="199"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="216"/>
         <source>Illustration of the direction bin structure</source>
         <translation>Illustrasjon av vinkelbøttene</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="231"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="371"/>
         <source>Output file (CSV)</source>
         <translation>Ut-fil (CSV)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="249"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="389"/>
         <source>Optional output file (CSV) - click on the Browse button to specify</source>
         <translation>Her er det mulig å spesfisere ei CSV-fil der histogrammet kan lagres - trykk på Browse-knappen for å spesifisere</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="259"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="399"/>
         <source>Browse</source>
         <translation>Browse</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="29"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="43"/>
         <source>Selected features only</source>
         <translation>Kun valgte objekter</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="443"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="579"/>
         <source>Save as PDF</source>
         <translation>Lagre som PDF</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="376"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="512"/>
         <source>Do not use line segment length for weighting</source>
         <translation>Ikke bruk linjesegmentlengde som vekt</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="379"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="515"/>
         <source>No weighting on length</source>
         <translation>Ingen lengdevekting</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="399"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="535"/>
         <source>Make sector areas proportional to the magnitudes (default is sector length/radius)</source>
         <translation>Gjør sektorenes areal proporsjonalt med linjemålet (ellers benyttes sektorlengde/-radius)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="402"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="538"/>
         <source>Area proportional</source>
         <translation>Arealproporsjonal</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="440"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="576"/>
         <source>Save as a 10cm by 10cm PDF</source>
         <translation>Lagrer som en 10cm x 10cm PDF</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="450"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="586"/>
         <source>Save as a 200 by 200 pixel SVG</source>
         <translation>Lagrer som en 200 x 200 piksel SVG</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="453"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="589"/>
         <source>Save as SVG</source>
         <translation>Lagre som SVG</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="420"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="556"/>
         <source>Copy to Clipboard</source>
         <translation>Kopier til utklippstavle</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="307"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="456"/>
         <source>Help</source>
         <translation>Hjelp</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="254"/>
+        <source>Options</source>
+        <translation>Valg</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="278"/>
+        <source>Tiling layer</source>
+        <translation>Oppdelingslag (flislag)</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="292"/>
+        <source>Use tiling</source>
+        <translation>Bruk oppdeling</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="305"/>
+        <source>Polygon layer for tiling</source>
+        <translation>Polygonlag for oppdeling</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="317"/>
+        <source>The polygon layer to use for tiling</source>
+        <translation>Polygonlaget som skal brukes til oppdeling</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="329"/>
+        <source>File location for SVG files: </source>
+        <translation>Plassering for SVG-filene</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="363"/>
+        <source>CSV export</source>
+        <translation>CSV-eksport</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="289"/>
+        <source>Whan using tiling, a rose diagram is generated for each polygon, and added to an output layer</source>
+        <translation>Ved oppdeling lages det ett rose-diagram for hvert polygon i oppdelingsdatasettet, og dette legges til et ut-lag</translation>
     </message>
 </context>
 <context>
     <name>parent</name>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="596"/>
+        <location filename="linedirectionhistogram_dialog.py" line="720"/>
         <source>Output CSV file</source>
         <translation>Ut-fil (CSV)</translation>
+    </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog.py" line="738"/>
+        <source>Directory for SVGs</source>
+        <translation>Katalog for SVG-filer</translation>
     </message>
 </context>
 </TS>
