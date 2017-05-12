@@ -127,6 +127,12 @@ class linedirectionhistogram:
                    (alayer.geometryType() == QGis.Line or
                     alayer.geometryType() == QGis.Polygon)):
                 self.dlg.InputLayer.addItem(alayer.name(), alayer.id())
+        self.dlg.TilingLayer.clear()
+        for alayer in self.iface.legendInterface().layers():
+            # Look for vector line (and polygon) layers
+            if (alayer.type() == QgsMapLayer.VectorLayer and
+                   alayer.geometryType() == QGis.Polygon):
+                self.dlg.TilingLayer.addItem(alayer.name(), alayer.id())
         """Run method that performs all the real work"""
         # show the dialog
         self.dlg.show()

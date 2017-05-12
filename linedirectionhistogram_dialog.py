@@ -34,11 +34,14 @@
 import os
 import csv
 import math
+import tempfile  # rose diagram SVG files for rose layer rendering
+import uuid   # for generating unique file names (QGIS bug #13565)
 
 from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
 from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from PyQt4.QtCore import QSizeF, QSize, QRect
+from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
 from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
 from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
@@ -48,6 +51,10 @@ from PyQt4.QtGui import QApplication, QImage, QPixmap
 from PyQt4.QtSvg import QSvgGenerator
 from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
 from qgis.core import QGis
+from qgis.core import QgsVectorLayer
+from qgis.core import QgsField, QgsFeature
+from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2
+from qgis.core import QgsSvgMarkerSymbolLayerV2, QgsRendererCategoryV2
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
 
@@ -93,8 +100,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         helpButton = self.helpButton
         helpButton.setText(self.HELP)
 
-        browseButton = self.BrowseButton
-        browseButton.setText(self.BROWSE)
+        browseButtonCSV = self.browseButtonCSV
+        browseButtonCSV.setText(self.BROWSE)
+        browseButtonTile = self.browseButtonTile
+        browseButtonTile.setText(self.BROWSE)
         closeButton = self.button_box.button(QDialogButtonBox.Close)
         closeButton.setText(self.CLOSE)
 
@@ -103,7 +112,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         cancelButton.clicked.connect(self.killWorker)
         helpButton.clicked.connect(self.giveHelp)
         closeButton.clicked.connect(self.reject)
-        browseButton.clicked.connect(self.browse)
+        browseButtonCSV.clicked.connect(self.browse)
+        browseButtonTile.clicked.connect(self.browseTile)
         dirNeutralCBCh = self.directionNeutralCheckBox.stateChanged
         dirNeutralCBCh.connect(self.updateBins)
         noWeightingCBCh = self.noWeightingCheckBox.stateChanged
@@ -117,6 +127,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.saveAsPDFButton.clicked.connect(self.saveAsPDF)
         self.saveAsSVGButton.clicked.connect(self.saveAsSVG)
         self.copyToClipboardButton.clicked.connect(self.copyToClipboard)
+        self.InputLayer.currentIndexChanged.connect(self.inputLayerChanged)
 
         self.saveAsPDFButton.setEnabled(False)
         self.saveAsSVGButton.setEnabled(False)
@@ -152,6 +163,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             maxoffsetangle = int(maxoffsetangle / 2)
         self.offsetAngleSpinBox.setMaximum(maxoffsetangle)
         self.offsetAngleSpinBox.setMinimum(-maxoffsetangle)
+        # Layer for the rose diagrams based on the input polygon tiles
+        self.roseLayer = None
+        # ID field name - constant
+        self.idfieldname = 'ID'
+        self.svgfiles = []  # Array of SVG files - first element is None
         self.result = None
 
     def startWorker(self):
@@ -173,10 +189,41 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.directionNeutralCheckBox.isChecked():
             self.directionneutral = True
         self.offsetangle = self.offsetAngleSpinBox.value()
+        tilelayer = None
+        # If a tiling layer is used, create rose diagram layer
+        if self.useTilingCheckBox.isChecked():
+            layerindex = self.TilingLayer.currentIndex()
+            layerId = self.TilingLayer.itemData(layerindex)
+            tilelayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+            if tilelayer is None:
+                self.showError(self.tr('No tile layer defined'))
+                self.histscene.clear()
+                return
+            if tilelayer.featureCount() == 0:
+                self.showError(self.tr('No features in tile layer'))
+                self.histscene.clear()
+                return
+            self.roseLayer = QgsVectorLayer('Point?crs=EPSG:4326',
+                                       "RoseDiagrams", "memory")
+            self.roseLayer.setCrs(tilelayer.crs())
+            # Add the ID field / attribute
+            self.roseLayer.dataProvider().addAttributes(
+                       [QgsField(self.idfieldname, QVariant.Int)])
+            self.roseLayer.updateFields()
+            # Add the IDs [1..number of "tiles"]
+            id = 1
+            for feature in tilelayer.getFeatures():
+                newfeature = QgsFeature()
+                centroid = feature.geometry().pointOnSurface()
+                newfeature.setGeometry(centroid)
+                newfeature.setAttributes([id])
+                self.roseLayer.dataProvider().addFeatures([newfeature])
+                id = id + 1
         # create a new worker instance
         worker = Worker(inputlayer, self.bins, self.directionneutral,
                         self.offsetangle,
-                        self.selectedFeaturesCheckBox.isChecked())
+                        self.selectedFeaturesCheckBox.isChecked(),
+                        tilelayer)
         ## configure the QgsMessageBar
         #msgBar = self.iface.messageBar().createMessage(self.tr('Joining'), '')
         #self.aprogressBar = QProgressBar()
@@ -220,10 +267,64 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.thread.deleteLater()
         # remove widget from the message bar (pop)
         #self.iface.messageBar().popWidget(self.messageBar)
+        # Three outcomes:
+        # 1) No data returned
+        # 2) A vector with only one element: Draw the rose diagram
+        # 3) A vector with several elements: Create a layer
+        #                                    with rose diagrams as symbols
         if ok and ret is not None:
-            self.result = ret
-            # report the result
-            # As a CSV file:
+            # The first element is always the over all histogram
+            self.result = ret[0]
+            if len(ret) > 1:  # Several elements - create SVG files for layer
+                # Initialise the vector of SVG files
+                self.svgfiles = [None] * len(ret)
+                # Determine the directory for storing the SVG files
+                tmpdir = tempfile.gettempdir()
+                if self.tileDirectory.text():
+                    tmpdir = self.tileDirectory.text()
+                # Set the prefix for the SVG files
+                #tempfilepathprefix = tmpdir + '/qgisLDH_'
+                tempfilepathprefix = (tmpdir + '/qgisLDH_rose_' +
+                                      str(uuid.uuid4()))
+                categories = []  # Renderer categories
+                # Create the SVG files and symbols for the tiles
+                for i in range(len(ret) - 1):
+                    # Set the global result variable to be used for
+                    # drawing the histogram
+                    self.result = ret[i + 1]
+                    self.drawHistogram()
+                    # Set the file name (and directory) for the SVG file
+                    filename = (tempfilepathprefix + str(i + 1) + '.svg')
+                    self.saveAsSVG(filename)
+                    self.svgfiles[i + 1] = filename
+                    ## Create the symbol for this ID value
+                    # initialize with the default symbol for this geom type
+                    symbol = QgsSymbolV2.defaultSymbol(
+                                self.roseLayer.geometryType())
+                    # configure an (SVG) symbol layer
+                    layer_style = {}
+                    layer_style['fill'] = '#ffffff'
+                    layer_style['name'] = filename
+                    layer_style['outline'] = '#000000'
+                    layer_style['outline-width'] = '6.8'
+                    layer_style['size'] = '20'
+                    sym_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
+                    # replace default symbol layer with the configured one
+                    if sym_layer is not None:
+                        symbol.changeSymbolLayer(0, sym_layer)
+                    # create renderer category
+                    category = QgsRendererCategoryV2(i + 1, symbol,
+                                                     str(i + 1))
+                    categories.append(category)
+                # create categorized renderer object
+                renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
+                                                          categories)
+                if renderer is not None:
+                    self.roseLayer.setRendererV2(renderer)
+                QgsMapLayerRegistry.instance().addMapLayer(self.roseLayer)
+                # Set the result to the over all histogram
+                self.result = ret[0]
+            # Shall the result be reported (as a CSV file):
             if self.outputfilename != "":
                 try:
                     with open(self.outputfilename, 'wb') as csvfile:
@@ -250,7 +351,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.showInfo("Trouble writing the CSV file: " + str(e))
             # Draw the histogram
             self.drawHistogram()
-        else:
+        else:  # No data returned
             # notify the user that something went wrong
             if not ok:
                 self.showError(self.tr('Aborted') + '!')
@@ -306,6 +407,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     def browse(self):
         outpath = saveCSVDialog(self)
         self.outputFile.setText(outpath)
+
+    def browseTile(self):
+        outpath = findTileDialog(self)
+        self.tileDirectory.setText(outpath)
 
     def noWeighting(self):
         if self.result is not None:
@@ -492,7 +597,24 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     #    for i in range(self.InputLayer.count()):
     #        if self.InputLayer.itemData(i) == inputlayerid:
     #            self.InputLayer.setCurrentIndex(i)
-    #    self.layerlistchanging = False
+    #   self.layerlistchanging = False
+
+    def inputLayerChanged(self):
+        layerindex = self.InputLayer.currentIndex()
+        layerId = self.InputLayer.itemData(layerindex)
+        inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+        if inputlayer is None:
+            self.showInfo(self.tr('No input layer defined'))
+            return
+        if inputlayer.featureCount() == 0:
+            self.showInfo(self.tr('No features in input layer'))
+            return
+        # If there are no selected features, the "selected features
+        # only" checkbox should be unchecked
+        if inputlayer.selectedFeatureCount() == 0:
+            self.selectedFeaturesCheckBox.setChecked(False)
+        else:
+            self.selectedFeaturesCheckBox.setChecked(True)
 
     def showError(self, text):
         """Show an error."""
@@ -571,9 +693,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         p.end()
 
     # Save to SVG
-    def saveAsSVG(self):
-        savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
-                                                       "", "*.svg"))
+    def saveAsSVG(self, location=None):
+        savename = location
+        if location is None:
+            savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
+"*.svg"))
         svgGen = QSvgGenerator()
         svgGen.setFileName(savename)
         svgGen.setSize(QSize(200, 200))
@@ -600,6 +724,21 @@ def saveCSVDialog(parent):
             root, ext = os.path.splitext(outFilePath)
             if ext.upper() != '.CSV':
                 outFilePath = '%s.csv' % outFilePath
+            outDir = os.path.dirname(outFilePath)
+            settings.setValue(key, outDir)
+        return outFilePath
+
+
+def findTileDialog(parent):
+        """Shows a file dialog and return the selected file path."""
+        settings = QSettings()
+        key = '/UI/lastShapefileDir'
+        outDir = settings.value(key)
+        #filter = 'Comma Separated Value (*.csv)'
+        outFilePath = QFileDialog.getExistingDirectory(parent,
+                       parent.tr('Directory for SVGs'), outDir)
+        outFilePath = unicode(outFilePath)
+        if outFilePath:
             outDir = os.path.dirname(outFilePath)
             settings.setValue(key, outDir)
         return outFilePath

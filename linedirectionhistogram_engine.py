@@ -4,6 +4,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import QCoreApplication
 from qgis.core import QGis
 from qgis.core import QgsVectorLayer
+from qgis.core import QgsGeometry
 
 # Angles:
 # Real world angles are measured clockwise from the 12 o'clock
@@ -28,7 +29,8 @@ class Worker(QtCore.QObject):
     finished = QtCore.pyqtSignal(bool, object)
 
     def __init__(self, inputvectorlayer, bins, directionneutral,
-                                  offsetangle, selectedfeaturesonly):
+                                  offsetangle, selectedfeaturesonly,
+                                  tilelayer=None):
         """Initialise.
 
         Arguments:
@@ -42,6 +44,7 @@ class Worker(QtCore.QObject):
                                  angle
         selectedfeaturesonly -- (boolean) should only selected
                                  features be considered
+        tilelayer --            (QgsVectorLayer) The (polygon) tile layer
         """
 
         QtCore.QObject.__init__(self)  # Essential!
@@ -51,6 +54,7 @@ class Worker(QtCore.QObject):
         self.directionneutral = directionneutral
         self.offsetangle = offsetangle
         self.selectedfeaturesonly = selectedfeaturesonly
+        self.tilelayer = tilelayer
         self.binsize = 360.0 / bins
         if self.directionneutral:
             self.binsize = 180.0 / bins
@@ -97,19 +101,40 @@ class Worker(QtCore.QObject):
                 self.finished.emit(False, None)
                 return
             self.increment = self.feature_count // 1000
-            # Initialise the bins
+            # Initialise the result vector
             statistics = []
+            # Initialise the bins for the over all result
+            mybins = []
             for i in range(self.bins):
-                statistics.append([0.0, 0])
+                mybins.append([0.0, 0])
+            # Add the over all bins
+            statistics.append(mybins)
             # Get the features (iterator)
             if self.selectedfeaturesonly:
                 features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
+            # Create a vector of the (possible) tile (Polygon) geometries
+            tilegeoms = []
+            if self.tilelayer is not None:
+                self.status.emit("Tiling!")
+                for tile in self.tilelayer.getFeatures():
+                    #self.status.emit("tile geom: " +
+                    #                 str(tile.geometry().asPolygon()))
+                    # Add the tile geometry to the vector
+                    tilegeoms.append(QgsGeometry(tile.geometry()))
+                # Initialise and add bins for all the tiles
+                for i in range(len(tilegeoms)):
+                    mybins = []
+                    for j in range(self.bins):
+                        mybins.append([0.0, 0])
+                    statistics.append(mybins)
             for feat in features:
                 # Allow user abort
                 if self.abort is True:
                     break
+                ## Prepare for the histogram creation by extracting
+                ## line geometries from the input layer
                 # We use a vector of polygon geometries to be able to
                 # handle MultiPolygons
                 inputpolygons = []
@@ -136,9 +161,32 @@ class Worker(QtCore.QObject):
                     for polygon in inputpolygons:
                         for ring in polygon:
                             inputlines.append(ring)
-                for inputlinegeom in inputlines:
+                # We introduce a vector of line geometries for the tiling
+                tilelinecoll = [None] * (len(tilegeoms) + 1)
+                # Use the first element to store all the input lines
+                # (for the over all histogram)
+                tilelinecoll[0] = inputlines
+                # Clip the lines based on the tile layer
+                if self.tilelayer is not None:
+                    i = 0
+                    for tile in tilegeoms:  # Go through the tiles
+                        newlines = []
+                        for linegeom in inputlines:
+                            # Create a geometry for the overlay
+                            qgsgeom = QgsGeometry.fromPolyline(linegeom)
+                            # Clip
+                            clipres = qgsgeom.intersection(tile)
+                            newlines.append(clipres.asPolyline())
+                        tilelinecoll[i + 1] = newlines
+                        i = i + 1
+                ## Lines have been extracted from the feature
+                ## - do calculations
+                j = 0
+                for tilelines in tilelinecoll:
+                  for inputlinegeom in tilelines:
                     # Skip degenerate lines
                     if inputlinegeom is None or len(inputlinegeom) < 2:
+                        j = j + 1
                         continue
                     # Go through all the segments of this line
                     nextpoint = inputlinegeom[0]
@@ -150,23 +198,24 @@ class Worker(QtCore.QObject):
                         lineangle = (thispoint.azimuth(nextpoint)
                                      - self.offsetangle)
                         # Find the bin
-                        fittingbin = (int(((lineangle + 180)) / self.binsize)
+                        fitbin = (int(((lineangle + 180)) / self.binsize)
                                       % self.bins)
                         if self.directionneutral:
                             if lineangle < 0.0:
                                 lineangle = 180.0 + lineangle
                             # Find the bin
-                            fittingbin = (int((lineangle) / self.binsize)
+                            fitbin = (int((lineangle) / self.binsize)
                                           % self.bins)
                         # Have to handle special case to keep index in range
-                        if fittingbin == self.bins:
-                            fittingbin = 0
-                        # Add to the length of the bin
-                        statistics[fittingbin][0] = (statistics[fittingbin][0]
+                        if fitbin == self.bins:
+                            fitbin = 0
+                        # Add to the length of the bin of this tile (j)
+                        statistics[j][fitbin][0] = (statistics[j][fitbin][0]
                                                   + linelength)
                         # Add to the number of line segments in the bin
-                        statistics[fittingbin][1] = (statistics[fittingbin][1]
+                        statistics[j][fitbin][1] = (statistics[j][fitbin][1]
                                                   + 1)
+                    j = j + 1
                 self.calculate_progress()
         except:
             import traceback

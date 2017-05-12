@@ -1,7 +1,5 @@
 .. linedirectionhistogram documentation master file, created by
    sphinx-quickstart on Sun Feb 12 17:11:03 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 *******************************************
 The QGIS Line Direction Histogram Plugin
@@ -10,6 +8,12 @@ The QGIS Line Direction Histogram Plugin
 .. toctree::
    :maxdepth: 2
 
+
+.. |rose| image:: illustrations/rosediagram.png
+   :width: 200
+   :align: middle
+
+|rose|
    
 Functionality
 =================
@@ -30,6 +34,12 @@ Functionality
 
 - The number of direction bins for the histogram can be specified.
 
+.. |rose90_1| image:: illustrations/rose90_1.png
+   :width: 200
+   :align: middle
+
+|rose| |rose90_1|
+
 - All the direction bin sectors will have the same size (same number
   of degrees covered).  This type of angle histogram is also called
   a "rose diagram" or "rose plot".
@@ -38,6 +48,20 @@ Functionality
   clockwise) for the direction bins can be specified.
 
 - The positions of the direction bins are shown graphically.
+
+.. |specbins| image:: illustrations/specify_bins.png
+   :align: middle
+
+|specbins|
+
+- The user can choose if the histograms shall be "orientation"
+  neutral (0-180 degrees instead of 0-360 degrees).
+
+.. |rose36_5_360| image:: illustrations/rose36_5_360.png
+   :width: 200
+   :align: middle
+
+|rose| |rose36_5_360|
 
 - A direction histogram (or rose diagram) is displayed, showing the
   distribution of the directions according to the chosen bins.
@@ -52,6 +76,35 @@ Functionality
   
 - If the plugin window is resized, the direction histogram is also
   resized.
+
+Tiling
+------
+Added in version 2.0.
+
+There is an option available for producing at point layer styled
+using rose diagrams (using SVG files) according to a tiling
+specified using a polygon layer.
+
+  .. |tiling| image:: illustrations/tiling.png
+   :align: middle
+
+|tiling|
+
+- The polygon layer can be chosen
+
+- The location for storing the SVG files can be specified
+
+- The SVG files are not deleted - the default location is the
+  system temporary file directory
+
+All the other options are also respected when generating the
+rose diagrams for the tiles.
+
+Due to a QGIS issue with SVG file caching (#13565: "modifying a
+svg already cached doesn't invalidate the cache, renders as
+version initially loaded during a session"), the SVG files have
+to be stored using unique file names.
+This produces a lot of SVG files that are not deleted by the plugin.
 
 The displayed histogram
 ========================
@@ -108,6 +161,13 @@ Options
   proportional to the accumulated amount (histogram like
   behaviour).
 
+- The user can choose to produce a point layer styled with rose
+  diagrams accordina to a tiling by a selected polygon layer.
+  For this option, it is also possible to specify the location
+  for storing the generated SVGs (that are used for styling the
+  rose diagram layer.
+
+
 Implementation
 ================
 
@@ -120,11 +180,15 @@ the length is added to the accumulated length for the bin.
 Polygons are split into its rings, and the line geometry of each ring
 is used for the calculations.
 
-
 Versions
 ===============
-The current version is 1.5.
+The current version is 2.0.
 
+- 2.0
+    - Added option to generate a point layer with rose diagrams based on tiles provided through a polygon layer (#10, #11)
+    - Set the default state for "selected features only" based on the presence of a selection (#12)
+- 1.6
+    - Fixed progress bar issue (#9)
 - 1.5
     - Added help button
 - 1.4
@@ -145,7 +209,6 @@ The current version is 1.5.
     - User interface fixes and updates
 - 1.0: First official version.
 
-
 Links
 =======
 
@@ -154,7 +217,6 @@ Links
 `LineDirectionHistogram code repository`_
 
 `LineDirectionHistogram issues`_
-
 
 .. _LineDirectionHistogram code repository: https://github.com/havatv/qgislinedirectionhistogramplugin.git
 .. _LineDirectionHistogram Plugin: https://plugins.qgis.org/plugins/LineDirectionHistogram/
