@@ -81,12 +81,12 @@
     <message>
         <location filename="linedirectionhistogram_dialog.py" line="199"/>
         <source>No tile layer defined</source>
-        <translation>Flislag mangler</translation>
+        <translation>Oppdelingslaget mangler</translation>
     </message>
     <message>
         <location filename="linedirectionhistogram_dialog.py" line="203"/>
         <source>No features in tile layer</source>
-        <translation>Flislaget inneholder ingen objekter</translation>
+        <translation>Oppdelingslaget inneholder ingen objekter</translation>
     </message>
 </context>
 <context>
@@ -214,7 +214,7 @@
     <message>
         <location filename="linedirectionhistogram_dialog_base.ui" line="278"/>
         <source>Tiling layer</source>
-        <translation>Oppdelingslag (flislag)</translation>
+        <translation>Oppdelingslag</translation>
     </message>
     <message>
         <location filename="linedirectionhistogram_dialog_base.ui" line="292"/>
