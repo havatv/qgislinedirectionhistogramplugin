@@ -38,7 +38,12 @@ Functionality
    :width: 200
    :align: middle
 
-|rose| |rose90_1|
+
++---------------+----------------+
+| Fewer bins    | More bins      |
++===============+================+
+| |rose|        | |rose90_1|     |
++---------------+----------------+
 
 - All the direction bin sectors will have the same size (same number
   of degrees covered).  This type of angle histogram is also called
@@ -52,7 +57,11 @@ Functionality
 .. |specbins| image:: illustrations/specify_bins.png
    :align: middle
 
-|specbins|
++------------------------------------------+
+| Direction bins illustration and options  |
++==========================================+
+| |specbins|                               |
++------------------------------------------+
 
 - The user can choose if the histograms shall be "orientation"
   neutral (0-180 degrees instead of 0-360 degrees).
@@ -61,7 +70,11 @@ Functionality
    :width: 200
    :align: middle
 
-|rose| |rose36_5_360|
++----------------------+-----------------------------------------------------+
+| Orientation neutral  | Not orientation neutral (twice the number of bins)  |
++======================+=====================================================+
+| |rose|               | |rose36_5_360|                                      |
++----------------------+-----------------------------------------------------+
 
 - A direction histogram (or rose diagram) is displayed, showing the
   distribution of the directions according to the chosen bins.
@@ -162,7 +175,7 @@ Options
   behaviour).
 
 - The user can choose to produce a point layer styled with rose
-  diagrams accordina to a tiling by a selected polygon layer.
+  diagrams according to a tiling by a selected polygon layer.
   For this option, it is also possible to specify the location
   for storing the generated SVGs (that are used for styling the
   rose diagram layer.
