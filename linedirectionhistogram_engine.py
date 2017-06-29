@@ -181,12 +181,11 @@ class Worker(QtCore.QObject):
                         i = i + 1
                 ## Lines have been extracted from the feature
                 ## - do calculations
-                j = 0
-                for tilelines in tilelinecoll:
-                  for inputlinegeom in tilelines:
+                j = 0  # Counter for the tiles
+                for tilelines in tilelinecoll:  # Handling the tiles
+                  for inputlinegeom in tilelines:  # Handling the lines
                     # Skip degenerate lines
                     if inputlinegeom is None or len(inputlinegeom) < 2:
-                        j = j + 1
                         continue
                     # Go through all the segments of this line
                     nextpoint = inputlinegeom[0]
@@ -215,7 +214,7 @@ class Worker(QtCore.QObject):
                         # Add to the number of line segments in the bin
                         statistics[j][fitbin][1] = (statistics[j][fitbin][1]
                                                   + 1)
-                    j = j + 1
+                  j = j + 1
                 self.calculate_progress()
         except:
             import traceback
