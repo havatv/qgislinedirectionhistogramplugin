@@ -129,6 +129,7 @@ class Worker(QtCore.QObject):
                     for j in range(self.bins):
                         mybins.append([0.0, 0])
                     statistics.append(mybins)
+            # Go through the features
             for feat in features:
                 # Allow user abort
                 if self.abort is True:
@@ -188,9 +189,8 @@ class Worker(QtCore.QObject):
                     if inputlinegeom is None or len(inputlinegeom) < 2:
                         continue
                     # Go through all the segments of this line
-                    nextpoint = inputlinegeom[0]
+                    thispoint = inputlinegeom[0]
                     for i in range(len(inputlinegeom) - 1):
-                        thispoint = nextpoint
                         nextpoint = inputlinegeom[i + 1]
                         linelength = sqrt(thispoint.sqrDist(nextpoint))
                         # Find the angle, and adjust for angle offset
@@ -214,7 +214,8 @@ class Worker(QtCore.QObject):
                         # Add to the number of line segments in the bin
                         statistics[j][fitbin][1] = (statistics[j][fitbin][1]
                                                   + 1)
-                  j = j + 1
+                        thispoint = nextpoint  # advance to the next point
+                  j = j + 1  # Next tile
                 self.calculate_progress()
         except:
             import traceback
