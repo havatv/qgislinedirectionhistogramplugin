@@ -540,6 +540,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     # Calculate the circular mean for the current result
     def circMean(self):
         sectorwidth = 360.0 / self.bins
+        if self.directionneutral:  # Shoud not happen
+            sectorwidth = sectorwidth / 2.0
         element = 0
         if self.noWeightingCheckBox.isChecked():
             element = 1
