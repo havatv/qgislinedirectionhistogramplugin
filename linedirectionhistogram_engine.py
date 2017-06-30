@@ -9,9 +9,14 @@ from qgis.core import QgsGeometry
 # Angles:
 # Real world angles are measured clockwise from the 12 o'clock
 # position (north)
-# QGIS azimuth angles: clockwise in degree, starting from north
+# QGIS azimuth angles: clockwise in degrees, starting from north
+# (between -180 and 180)
 # QT angles are measured counter clockwise from the 3 o'clock
-# position
+# position (in radians)
+
+# The first bin starts at north + offsetangle (clockwise)
+# The width depends on the directionneutral flag and the
+# number of bins
 
 
 class Worker(QtCore.QObject):
@@ -193,20 +198,39 @@ class Worker(QtCore.QObject):
                     for i in range(len(inputlinegeom) - 1):
                         nextpoint = inputlinegeom[i + 1]
                         linelength = sqrt(thispoint.sqrDist(nextpoint))
-                        # Find the angle, and adjust for angle offset
-                        lineangle = (thispoint.azimuth(nextpoint)
-                                     - self.offsetangle)
+                        ## Find the angle, and adjust for angle offset
+                        #lineangle = (thispoint.azimuth(nextpoint)
+                        #             - self.offsetangle)
                         # Find the bin
-                        fitbin = (int(((lineangle + 180)) / self.binsize)
-                                      % self.bins)
+                        #fitbin = (int(((lineangle + 180)) / self.binsize)
+                        #              % self.bins)
+                        #if self.directionneutral:
+                        #    if lineangle < 0.0:
+                        #        lineangle = 180.0 + lineangle
+                        #    # Find the bin
+                        #    fitbin = (int((lineangle) / self.binsize)
+                        #                  % self.bins)
+                        ## Have to handle special case to keep index in range
+                        #if fitbin == self.bins:
+                        #    fitbin = 0
+                        # Find the angle of the line segment
+                        lineangle = thispoint.azimuth(nextpoint)
+                        if lineangle < 0:
+                            lineangle = 360 + lineangle
                         if self.directionneutral:
-                            if lineangle < 0.0:
-                                lineangle = 180.0 + lineangle
-                            # Find the bin
-                            fitbin = (int((lineangle) / self.binsize)
-                                          % self.bins)
-                        # Have to handle special case to keep index in range
+                            if lineangle >= 180.0:
+                                lineangle = lineangle - 180
+                        # Find the bin
+                        if lineangle > self.offsetangle:
+                            fitbin = (int((lineangle - self.offsetangle) / self.binsize)
+                                      % self.bins)
+                        else:
+                            fitbin = (int((360 + lineangle - self.offsetangle) / self.binsize)
+                                      % self.bins)
+                        #self.status.emit("fitbin: " + str(fitbin) + " angle: " + str(lineangle) + " offs.angle: " + str(lineangle - self.offsetangle))
+                        # Have to handle special case to keep index in range ???
                         if fitbin == self.bins:
+                            self.status.emit("fitbin == self.bins")
                             fitbin = 0
                         # Add to the length of the bin of this tile (j)
                         statistics[j][fitbin][0] = (statistics[j][fitbin][0]

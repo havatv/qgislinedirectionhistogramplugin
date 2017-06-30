@@ -169,6 +169,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.idfieldname = 'ID'
         self.svgfiles = []  # Array of SVG files - first element is None
         self.result = None
+        self.sectorcolour = QColor(240, 240, 240)
 
     def startWorker(self):
         #self.showInfo('Ready to start worker')
@@ -273,6 +274,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # 3) A vector with several elements: Create a layer
         #                                    with rose diagrams as symbols
         if ok and ret is not None:
+            #self.showInfo("ret: " + str(ret))
             # The first element is always the over all histogram
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
@@ -421,6 +423,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.drawHistogram()
 
     def drawHistogram(self):
+        # self.result shall contain the bins.  The first bin
+        # starts at north + offsetangle, continuing clockwise
         if self.result is None:
             return
         #self.showInfo(str(self.result))
@@ -450,6 +454,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         padding = 3
         maxlength = size / 2.0 - padding * 2
         center = QPoint(left + width / 2.0, top + height / 2.0)
+        # The scene geomatry of the center point
         start = QPointF(self.histogramGraphicsView.mapToScene(center))
         # Create some concentric rings as background:
         for i in range(self.NUMBEROFRINGS):
@@ -461,57 +466,101 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                           radius * 2.0)
             circle.setPen(QPen(QColor(153, 153, 255)))
             self.histscene.addItem(circle)
+        # Create the sectors of the Rose diagram
+        sectorwidth = 360.0 / self.bins
+        if self.directionneutral:
+            sectorwidth = sectorwidth / 2.0
         for i in range(self.bins):
+            # Find the length of the sector
             linelength = maxlength * self.result[i][element] / maxvalue
+            # Area proportional variant for length
             if self.proportionalAreaCheckBox.isChecked():
                 linelength = (maxlength * math.sqrt(self.result[i][element]) /
                               math.sqrt(maxvalue))
-            angle = 90 - i * 360.0 / self.bins - self.offsetangle
-            if self.directionneutral:
-                angle = 90.0 - i * 180.0 / self.bins - self.offsetangle
-            directedline = QLineF.fromPolar(linelength, angle)
-            topt = center + QPoint(directedline.x2(), directedline.y2())
-            end = QPointF(self.histogramGraphicsView.mapToScene(topt))
-            if self.directionneutral:
-                otherendpt = center - QPoint(directedline.x2(),
-                                             directedline.y2())
-                scotendpt = self.histogramGraphicsView.mapToScene(otherendpt)
-                otherend = QPointF(scotendpt)
-                self.histscene.addItem(QGraphicsLineItem(QLineF(otherend,
-                                                            end)))
+            # Start angle for sector i
+            # Working on Qt angles (0 = west, counter-clockwise)
+            angle = 90 - i * sectorwidth - self.offsetangle
+            # Draw the sector
+            #dirline = QLineF.fromPolar(linelength, angle)
+            #topt = center + QPoint(dirline.x2(), dirline.y2())
+            #end = QPointF(self.histogramGraphicsView.mapToScene(topt))
+            if not self.directionneutral:
+                #self.histscene.addItem(QGraphicsLineItem(QLineF(start, end)))
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
                                               linelength * 2.0)
-                sector.setStartAngle(int(16 * (90.0 - i * 180.0 /
-                                               self.bins -
-                                               self.offsetangle)))
-                sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
-                sector.setBrush(QBrush(QColor(240, 240, 240)))
-                self.histscene.addItem(sector)
-                # The sector in the oposite direction
-                sector = QGraphicsEllipseItem(start.x() - linelength,
-                                              start.y() - linelength,
-                                              linelength * 2.0,
-                                              linelength * 2.0)
-                sector.setStartAngle(int(16 * (270.0 - i * 180.0
-                                               / self.bins -
-                                               self.offsetangle)))
-                sector.setSpanAngle(int(16 * (-180.0 / self.bins)))
-                sector.setBrush(QBrush(QColor(240, 240, 240)))
+                sector.setStartAngle(int(16 * angle))
+                sector.setSpanAngle(int(16 * (-sectorwidth)))
+                sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
             else:
-                self.histscene.addItem(QGraphicsLineItem(QLineF(start, end)))
+                #otherendpt = center - QPoint(dirline.x2(),
+                #                             dirline.y2())
+                #scotendpt = self.histogramGraphicsView.mapToScene(otherendpt)
+                #otherend = QPointF(scotendpt)
+                #self.histscene.addItem(QGraphicsLineItem(QLineF(otherend,
+                #                                            end)))
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
                                               linelength * 2.0)
-                sector.setStartAngle(int(16 * (90.0 - i * 360.0 /
-                                               self.bins -
-                                               self.offsetangle)))
-                sector.setSpanAngle(int(16 * (-360.0 / self.bins)))
-                sector.setBrush(QBrush(QColor(240, 240, 240)))
+                sector.setStartAngle(int(16 * angle))
+                sector.setSpanAngle(int(16 * (-sectorwidth)))
+                sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
+                # The sector in the opposite direction
+                sector = QGraphicsEllipseItem(start.x() - linelength,
+                                              start.y() - linelength,
+                                              linelength * 2.0,
+                                              linelength * 2.0)
+                sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
+                                               self.offsetangle)))
+                sector.setSpanAngle(int(16 * (-sectorwidth)))
+                sector.setBrush(QBrush(self.sectorcolour))
+                self.histscene.addItem(sector)
+        # Circular statistics
+        if not self.directionneutral:
+            (circmeanx, circmeany) = self.circMean()
+            self.showInfo("Mean x: " + str(circmeanx) + " Mean y: " + str(circmeany))
+            meandirection = 90 + math.degrees(math.atan2(circmeany, circmeanx))
+            self.showInfo("Mean direction: " + str(meandirection))
+            ## Draw the point
+            #radius = 4
+            #ptcircle = QGraphicsEllipseItem(
+            #          start.x() + circmeanx * maxlength - radius,
+            #          start.y() + circmeany * maxlength - radius,
+            #          radius * 2.0, radius * 2.0)
+            #ptcircle.setPen(QPen(QColor(153, 0, 0)))
+            #self.histscene.addItem(ptcircle)
+        #else:
+        # meanangle = meanangle / 2.0
+
+    # Calculate the circular mean for the current result
+    def circMean(self):
+        sectorwidth = 360.0 / self.bins
+        element = 0
+        if self.noWeightingCheckBox.isChecked():
+            element = 1
+        sumx = 0  # sum of x values
+        sumy = 0  # sum of y values
+        sumlinelength = 0 # sum of line lengths
+        for i in range(self.bins):
+            # Get the accumulated line length for the sector
+            linelength = self.result[i][element]
+            # Accumulate line length
+            sumlinelength = sumlinelength + linelength
+            # Set the start angle for sector i
+            # Working on Qt angles (0 = west, counter-clockwise)
+            angle = 90 - i * sectorwidth - self.offsetangle
+            addx = linelength * math.cos(math.radians(angle - sectorwidth / 2.0))
+            addy = linelength * math.sin(math.radians(angle - sectorwidth / 2.0))
+            sumx = sumx + addx
+            sumy = sumy + addy
+        # Directional statistics
+        normsumx = sumx / sumlinelength
+        normsumy = 0.0 - (sumy / sumlinelength)
+        return (normsumx, normsumy)
 
     # Update the visualisation of the bin structure
     def updateBins(self):
