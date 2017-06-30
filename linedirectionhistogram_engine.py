@@ -198,21 +198,6 @@ class Worker(QtCore.QObject):
                     for i in range(len(inputlinegeom) - 1):
                         nextpoint = inputlinegeom[i + 1]
                         linelength = sqrt(thispoint.sqrDist(nextpoint))
-                        ## Find the angle, and adjust for angle offset
-                        #lineangle = (thispoint.azimuth(nextpoint)
-                        #             - self.offsetangle)
-                        # Find the bin
-                        #fitbin = (int(((lineangle + 180)) / self.binsize)
-                        #              % self.bins)
-                        #if self.directionneutral:
-                        #    if lineangle < 0.0:
-                        #        lineangle = 180.0 + lineangle
-                        #    # Find the bin
-                        #    fitbin = (int((lineangle) / self.binsize)
-                        #                  % self.bins)
-                        ## Have to handle special case to keep index in range
-                        #if fitbin == self.bins:
-                        #    fitbin = 0
                         # Find the angle of the line segment
                         lineangle = thispoint.azimuth(nextpoint)
                         if lineangle < 0:
@@ -222,13 +207,12 @@ class Worker(QtCore.QObject):
                                 lineangle = lineangle - 180
                         # Find the bin
                         if lineangle > self.offsetangle:
-                            fitbin = (int((lineangle - self.offsetangle) / self.binsize)
-                                      % self.bins)
+                            fitbin = (int((lineangle - self.offsetangle) /
+                                      self.binsize) % self.bins)
                         else:
-                            fitbin = (int((360 + lineangle - self.offsetangle) / self.binsize)
-                                      % self.bins)
-                        #self.status.emit("fitbin: " + str(fitbin) + " angle: " + str(lineangle) + " offs.angle: " + str(lineangle - self.offsetangle))
-                        # Have to handle special case to keep index in range ???
+                            fitbin = (int((360 + lineangle - self.offsetangle)
+                                      / self.binsize) % self.bins)
+                        # Have to handle special case to keep index in range?
                         if fitbin == self.bins:
                             self.status.emit("fitbin == self.bins")
                             fitbin = 0

@@ -522,7 +522,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # Circular statistics
         if not self.directionneutral:
             (circmeanx, circmeany) = self.circMean()
-            self.showInfo("Mean x: " + str(circmeanx) + " Mean y: " + str(circmeany))
+            self.showInfo("Mean x: " + str(circmeanx) +
+                          " Mean y: " + str(circmeany))
             meandirection = 90 + math.degrees(math.atan2(circmeany, circmeanx))
             self.showInfo("Mean direction: " + str(meandirection))
             ## Draw the point
@@ -544,7 +545,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             element = 1
         sumx = 0  # sum of x values
         sumy = 0  # sum of y values
-        sumlinelength = 0 # sum of line lengths
+        sumlinelength = 0  # sum of line lengths
         for i in range(self.bins):
             # Get the accumulated line length for the sector
             linelength = self.result[i][element]
@@ -553,8 +554,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Set the start angle for sector i
             # Working on Qt angles (0 = west, counter-clockwise)
             angle = 90 - i * sectorwidth - self.offsetangle
-            addx = linelength * math.cos(math.radians(angle - sectorwidth / 2.0))
-            addy = linelength * math.sin(math.radians(angle - sectorwidth / 2.0))
+            addx = (linelength *
+                    math.cos(math.radians(angle - sectorwidth / 2.0)))
+            addy = (linelength *
+                    math.sin(math.radians(angle - sectorwidth / 2.0)))
             sumx = sumx + addx
             sumy = sumy + addy
         # Directional statistics
