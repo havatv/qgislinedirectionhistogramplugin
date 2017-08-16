@@ -3,7 +3,7 @@
 <context>
     <name>Worker</name>
     <message>
-        <location filename="linedirectionhistogram_engine.py" line="83"/>
+        <location filename="linedirectionhistogram_engine.py" line="88"/>
         <source>No input layer defined</source>
         <translation>Inndatasett mangler</translation>
     </message>
@@ -44,32 +44,32 @@
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="607"/>
+        <location filename="linedirectionhistogram_dialog.py" line="676"/>
         <source>No input layer defined</source>
         <translation>Inndatasett mangler</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="357"/>
+        <location filename="linedirectionhistogram_dialog.py" line="361"/>
         <source>Aborted</source>
         <translation>Avbrutt</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="359"/>
+        <location filename="linedirectionhistogram_dialog.py" line="363"/>
         <source>No histogram created</source>
         <translation>Histogrammet ble ikke generert</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="380"/>
+        <location filename="linedirectionhistogram_dialog.py" line="384"/>
         <source>Worker</source>
         <translation>Arbeider</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="388"/>
+        <location filename="linedirectionhistogram_dialog.py" line="392"/>
         <source>Killing worker</source>
         <translation>Dreper arbeidsprosessen</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="610"/>
+        <location filename="linedirectionhistogram_dialog.py" line="679"/>
         <source>No features in input layer</source>
         <translation>Innlaget inneholder ingen objekter</translation>
     </message>
@@ -79,12 +79,12 @@
         <translation>Hjelp</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="199"/>
+        <location filename="linedirectionhistogram_dialog.py" line="202"/>
         <source>No tile layer defined</source>
         <translation>Oppdelingslaget mangler</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="203"/>
+        <location filename="linedirectionhistogram_dialog.py" line="206"/>
         <source>No features in tile layer</source>
         <translation>Oppdelingslaget inneholder ingen objekter</translation>
     </message>
@@ -157,7 +157,7 @@
         <translation>Kun valgte objekter</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="579"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="599"/>
         <source>Save as PDF</source>
         <translation>Lagre som PDF</translation>
     </message>
@@ -172,32 +172,32 @@
         <translation>Ingen lengdevekting</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="535"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="555"/>
         <source>Make sector areas proportional to the magnitudes (default is sector length/radius)</source>
         <translation>Gjør sektorenes areal proporsjonalt med linjemålet (ellers benyttes sektorlengde/-radius)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="538"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="558"/>
         <source>Area proportional</source>
         <translation>Arealproporsjonal</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="576"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="596"/>
         <source>Save as a 10cm by 10cm PDF</source>
         <translation>Lagrer som en 10cm x 10cm PDF</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="586"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="606"/>
         <source>Save as a 200 by 200 pixel SVG</source>
         <translation>Lagrer som en 200 x 200 piksel SVG</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="589"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="609"/>
         <source>Save as SVG</source>
         <translation>Lagre som SVG</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="556"/>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="576"/>
         <source>Copy to Clipboard</source>
         <translation>Kopier til utklippstavle</translation>
     </message>
@@ -246,16 +246,21 @@
         <source>Whan using tiling, a rose diagram is generated for each polygon, and added to an output layer</source>
         <translation>Ved oppdeling lages det ett rose-diagram for hvert polygon i oppdelingsdatasettet, og dette legges til et ut-lag</translation>
     </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="535"/>
+        <source>Logaritimic</source>
+        <translation>Logaritmisk</translation>
+    </message>
 </context>
 <context>
     <name>parent</name>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="720"/>
+        <location filename="linedirectionhistogram_dialog.py" line="789"/>
         <source>Output CSV file</source>
         <translation>Ut-fil (CSV)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="738"/>
+        <location filename="linedirectionhistogram_dialog.py" line="807"/>
         <source>Directory for SVGs</source>
         <translation>Katalog for SVG-filer</translation>
     </message>

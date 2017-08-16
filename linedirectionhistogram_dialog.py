@@ -72,8 +72,8 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def __init__(self, iface, parent=None):
-        self.iface = iface
-        self.plugin_dir = os.path.dirname(__file__)
+        #self.iface = iface
+        #self.plugin_dir = os.path.dirname(__file__)
 
         # Some constants
         self.LINEDIRECTIONHISTOGRAM = self.tr('LineDirectionHistogram')
@@ -118,6 +118,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         dirNeutralCBCh.connect(self.updateBins)
         noWeightingCBCh = self.noWeightingCheckBox.stateChanged
         noWeightingCBCh.connect(self.noWeighting)
+        logaritmicCBCh = self.logaritmicCheckBox.stateChanged
+        logaritmicCBCh.connect(self.logaritmic)
         noAreaProportionalCBCh = self.proportionalAreaCheckBox.stateChanged
         noAreaProportionalCBCh.connect(self.proportionalArea)
         binsSBCh = self.binsSpinBox.valueChanged[str]
@@ -334,19 +336,19 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                     quotechar='"', quoting=csv.QUOTE_MINIMAL)
                         csvwriter.writerow(["StartAngle", "EndAngle",
                                             "Length", "Number"])
-                        for i in range(len(ret)):
+                        for i in range(len(ret[0])):
                             if self.directionneutral:
                                 angle = (i * 180.0 / self.bins +
                                                 self.offsetangle)
                                 csvwriter.writerow([angle,
                                                    angle + 180.0 / self.bins,
-                                                   ret[i][0], ret[i][1]])
+                                                   ret[0][i][0], ret[0][i][1]])
                             else:
                                 angle = (i * 360.0 / self.bins +
                                                          self.offsetangle)
                                 csvwriter.writerow([angle,
                                                angle + 360.0 / self.bins,
-                                               ret[i][0], ret[i][1]])
+                                               ret[0][i][0], ret[0][i][1]])
                     with open(self.outputfilename + 't', 'wb') as csvtfile:
                         csvtfile.write('"Real","Real","Real","Integer"')
                 except IOError, e:
@@ -422,6 +424,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.result is not None:
             self.drawHistogram()
 
+    def logaritmic(self):
+        if self.result is not None:
+            self.drawHistogram()
+
     def drawHistogram(self):
         # self.result shall contain the bins.  The first bin
         # starts at north + offsetangle, continuing clockwise
@@ -440,6 +446,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.histscene.clear()
         if maxvalue == 0:
             return
+        if self.logaritmicCheckBox.isChecked():
+            maxvalue = math.log1p(maxvalue)
+        if self.proportionalAreaCheckBox.isChecked():
+            maxvalue = math.sqrt(maxvalue)
         viewprect = QRectF(self.histogramGraphicsView.viewport().rect())
         self.histogramGraphicsView.setSceneRect(viewprect)
         bottom = self.histogramGraphicsView.sceneRect().bottom()
@@ -472,11 +482,16 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             sectorwidth = sectorwidth / 2.0
         for i in range(self.bins):
             # Find the length of the sector
-            linelength = maxlength * self.result[i][element] / maxvalue
-            # Area proportional variant for length
+            currentLength = self.result[i][element]
+            if self.logaritmicCheckBox.isChecked():
+                currentLength = math.log1p(currentLength)
             if self.proportionalAreaCheckBox.isChecked():
-                linelength = (maxlength * math.sqrt(self.result[i][element]) /
-                              math.sqrt(maxvalue))
+                currentLength = math.sqrt(currentLength)
+            linelength = maxlength * currentLength / maxvalue
+            # Area proportional variant for length
+            #if self.proportionalAreaCheckBox.isChecked():
+            #    linelength = (maxlength * math.sqrt(currentLength) /
+            #                  math.sqrt(maxvalue))
             # Start angle for sector i
             # Working on Qt angles (0 = west, counter-clockwise)
             angle = 90 - i * sectorwidth - self.offsetangle

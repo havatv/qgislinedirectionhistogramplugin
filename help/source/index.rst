@@ -167,6 +167,10 @@ Options
 - The user can specify if line segment length shall be used for
   weighting the bins (this is the default).
 
+- The user can choose to use the logarithm to define the radius of
+  the sectors.
+  The default is not to use the logarithm.
+
 - The user can choose to have the area of a sector of the
   histogram be proportional to the accumulated amount for
   that sector.
@@ -197,6 +201,13 @@ Versions
 ===============
 The current version is 2.0.
 
+- 2.3
+    - Added the logarithm option (#17)
+    - Fixed CSV output (#16)
+- 2.2
+    - Fixed angle offset issue (#15) and added some circular statistics output (#14)
+- 2.1
+    - Fixed issue #13 (problems with multipart geometries)
 - 2.0
     - Added option to generate a point layer with rose diagrams based on tiles provided through a polygon layer (#10, #11)
     - Set the default state for "selected features only" based on the presence of a selection (#12)
