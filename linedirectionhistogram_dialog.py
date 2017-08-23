@@ -553,9 +553,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # meanangle = meanangle / 2.0
 
     # Calculate the circular mean for the current result
+    # Returns the normalised vector (x,y)
     def circMean(self):
         sectorwidth = 360.0 / self.bins
-        if self.directionneutral:  # Shoud not happen
+        if self.directionneutral:  # Should not happen
             sectorwidth = sectorwidth / 2.0
         element = 0
         if self.noWeightingCheckBox.isChecked():
@@ -581,6 +582,46 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         normsumx = sumx / sumlinelength
         normsumy = 0.0 - (sumy / sumlinelength)
         return (normsumx, normsumy)
+
+    # Calculate the direction neutral circular mean for the current
+    # result return the normalised vector (x,y)
+    # Must calculate for each sector and reprt the largest one
+    # Not complete at all!!! ????
+    def semiCircMean(self):
+        sectorwidth = 360.0 / self.bins
+        if self.directionneutral:  # Should always be the case
+            sectorwidth = sectorwidth / 2.0
+        element = 0
+        if self.noWeightingCheckBox.isChecked():
+            element = 1
+
+        maxvalue = 0
+        maxbin = 0
+        for j in range(self.bins):
+          sumx = 0  # sum of x values
+          sumy = 0  # sum of y values
+          sumlinelength = 0  # sum of line lengths
+          # Set the mean angle for sector j
+          # Change to Qt angles (0 = west, counter-clockwise)
+          mainangle = 90 - (j + 0.5) * sectorwidth - self.offsetangle
+          for i in range(self.bins):
+            # Get the accumulated line length for the sector
+            linelength = self.result[i][element]
+            # Accumulate line length
+            sumlinelength = sumlinelength + linelength
+            # Set the start angle for sector i
+            # Working on Qt angles (0 = west, counter-clockwise)
+            angle = 90 - i * sectorwidth - self.offsetangle
+            addx = (linelength *
+                    math.cos(math.radians(angle - sectorwidth / 2.0)))
+            addy = (linelength *
+                    math.sin(math.radians(angle - sectorwidth / 2.0)))
+            sumx = sumx + addx
+            sumy = sumy + addy
+          # Directional statistics
+          normsumx = sumx / sumlinelength
+          normsumy = 0.0 - (sumy / sumlinelength)
+          return (normsumx, normsumy)
 
     # Update the visualisation of the bin structure
     def updateBins(self):
