@@ -19,7 +19,9 @@ email=havard.tveite@nmbu.no
 
 # Optional items:
 # Uncomment the following line and add your changelog:
-changelog=2.3
+changelog=2.4 (not released)
+    -- User interface change from toolbox to tab for options
+    2.3
     -- Added the logarithm option (#17)
     -- Fixed CSV output (#16)
     2.2

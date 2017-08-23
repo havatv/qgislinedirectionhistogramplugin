@@ -201,6 +201,9 @@ Versions
 ===============
 The current version is 2.0.
 
+- 2.4 (not released)
+    - User interface change from toolbox to tab for options
+    - ...
 - 2.3
     - Added the logarithm option (#17)
     - Fixed CSV output (#16)
