@@ -40,7 +40,7 @@ import uuid   # for generating unique file names (QGIS bug #13565)
 from PyQt4 import uic
 from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
 from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
-from PyQt4.QtCore import QSizeF, QSize, QRect
+from PyQt4.QtCore import QSizeF, QSize, QRect, Qt
 from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
 from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
@@ -262,7 +262,16 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def workerFinished(self, ok, ret):
         """Handles the output from the worker and cleans up after the
-           worker has finished."""
+           worker has finished.
+           ok: indicates if the result is sensible
+           ret: array of bin arrays.  The first bin array is for
+                the over all data.  Each bin array contains the
+                statistics for a sector.
+                The first sector starts at (or close to) north (the
+                y-axis), and extends clockwise.  If the user has
+                specified an offset, the sector starts either east
+                (negative offset) or west (positive offset) of
+                north."""
         # clean up the worker and thread
         self.worker.deleteLater()
         self.thread.quit()
@@ -476,6 +485,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                           radius * 2.0)
             circle.setPen(QPen(QColor(153, 153, 255)))
             self.histscene.addItem(circle)
+
+        # Circular statistics
+        maxbin = -1
+        binangle = 0.0
+        strength = 0.0
+        if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
+            (maxbin, binangle, strength) = self.semiCircMean()
+
         # Create the sectors of the Rose diagram
         sectorwidth = 360.0 / self.bins
         if self.directionneutral:
@@ -510,6 +527,38 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
             else:
+                if (self.dirTrendCheckBox.isChecked() and
+                    i == maxbin):
+                  # Show the direction trend for this bin:
+                  sector = QGraphicsEllipseItem(start.x() - maxlength,
+                                              start.y() - maxlength,
+                                              maxlength * 2.0,
+                                              maxlength * 2.0)
+                  sector.setStartAngle(int(16 * angle))
+                  sector.setSpanAngle(int(16 * (-sectorwidth)))
+                  sector.setBrush(QBrush(QColor(255,
+                                                255 - (strength * 255),
+                                                255 - (strength * 255))))
+                  sector.setPen(QPen(QColor(255,
+                                                255 - (strength * 255),
+                                                255 - (strength * 255))))
+                  self.histscene.addItem(sector)
+                  # The sector in the opposite direction
+                  sector = QGraphicsEllipseItem(start.x() - maxlength,
+                                              start.y() - maxlength,
+                                              maxlength * 2.0,
+                                              maxlength * 2.0)
+                  sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
+                                               self.offsetangle)))
+                  sector.setSpanAngle(int(16 * (-sectorwidth)))
+                  sector.setBrush(QBrush(QColor(255,
+                                                255 - (strength * 255),
+                                                255 - (strength * 255))))
+                  sector.setPen(QPen(QColor(255,
+                                                255 - (strength * 255),
+                                                255 - (strength * 255))))
+                  self.histscene.addItem(sector)
+
                 #otherendpt = center - QPoint(dirline.x2(),
                 #                             dirline.y2())
                 #scotendpt = self.histogramGraphicsView.mapToScene(otherendpt)
@@ -534,26 +583,31 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 sector.setSpanAngle(int(16 * (-sectorwidth)))
                 sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
-        # Circular statistics
-        if not self.directionneutral:
-            (circmeanx, circmeany) = self.circMean()
-            self.showInfo("Mean x: " + str(circmeanx) +
-                          " Mean y: " + str(circmeany))
-            meandirection = 90 + math.degrees(math.atan2(circmeany, circmeanx))
-            self.showInfo("Mean direction: " + str(meandirection))
-            ## Draw the point
-            #radius = 4
-            #ptcircle = QGraphicsEllipseItem(
-            #          start.x() + circmeanx * maxlength - radius,
-            #          start.y() + circmeany * maxlength - radius,
-            #          radius * 2.0, radius * 2.0)
-            #ptcircle.setPen(QPen(QColor(153, 0, 0)))
-            #self.histscene.addItem(ptcircle)
-        #else:
-        # meanangle = meanangle / 2.0
+        if not self.directionneutral and self.dirTrendCheckBox.isChecked():
+                  # Get the mean
+                  (circmeanx, circmeany) = self.circMean()
+                  #self.showInfo("Mean x: " + str(circmeanx) +
+                  #              " Mean y: " + str(circmeany))
+                  # atan2: Return atan(y / x), in radians.
+                  #meandirection = math.degrees(math.atan2(circmeany, circmeanx))
+                  ## Draw the point
+                  radius = 4
+                  ptcircle = QGraphicsEllipseItem(
+                            start.x() + circmeanx * maxlength - radius,
+                            start.y() - circmeany * maxlength - radius,
+                            radius * 2.0, radius * 2.0)
+                  dirLine = QGraphicsLineItem(start.x(), start.y(), start.x() + circmeanx * maxlength, start.y() - circmeany * maxlength)
+                  myPen = QPen(QColor(153, 0, 0))
+                  myPen.setWidth(5)
+                  myPen.setCapStyle(Qt.FlatCap)
+                  dirLine.setPen(myPen)
+                  ptcircle.setPen(QPen(QColor(153, 0, 0)))
+                  ptcircle.setBrush(QBrush(QColor(153, 0, 0)))
+                  self.histscene.addItem(ptcircle)
+                  self.histscene.addItem(dirLine)
 
     # Calculate the circular mean for the current result
-    # Returns the normalised vector (x,y)
+    # Returns the normalised vector (x,y) - (east, north)
     def circMean(self):
         sectorwidth = 360.0 / self.bins
         if self.directionneutral:  # Should not happen
@@ -570,58 +624,79 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Accumulate line length
             sumlinelength = sumlinelength + linelength
             # Set the start angle for sector i
+            # Angles are geographic (0 = north, clockwise)
             # Working on Qt angles (0 = west, counter-clockwise)
-            angle = 90 - i * sectorwidth - self.offsetangle
-            addx = (linelength *
-                    math.cos(math.radians(angle - sectorwidth / 2.0)))
-            addy = (linelength *
-                    math.sin(math.radians(angle - sectorwidth / 2.0)))
+            angle = 90 - ((i + 0.5) * sectorwidth + self.offsetangle)
+            #angle = (i + 0.5) * sectorwidth + self.offsetangle
+            addx = linelength * math.cos(math.radians(angle))
+            addy = linelength * math.sin(math.radians(angle))
             sumx = sumx + addx
             sumy = sumy + addy
         # Directional statistics
         normsumx = sumx / sumlinelength
-        normsumy = 0.0 - (sumy / sumlinelength)
+        normsumy = sumy / sumlinelength
         return (normsumx, normsumy)
 
-    # Calculate the direction neutral circular mean for the current
-    # result return the normalised vector (x,y)
-    # Must calculate for each sector and reprt the largest one
-    # Not complete at all!!! ????
+    # Approximate the direction neutral circular mean for the current
+    # result by returning the bin / sector number that gives the
+    # maximum semi-circular mean together with the strength of the
+    # direction trend.
     def semiCircMean(self):
+        oddnumberofbins = self.bins % 2
         sectorwidth = 360.0 / self.bins
         if self.directionneutral:  # Should always be the case
             sectorwidth = sectorwidth / 2.0
         element = 0
         if self.noWeightingCheckBox.isChecked():
             element = 1
+        maxvalue = 0  # Maximum normalised value
+        maxbin = 0    # Bin with maximum normalised value
+        maxbinangle = -999
 
-        maxvalue = 0
-        maxbin = 0
+        # Calculate the circle reference values
+        totalsum = 0  # sum of all the bin values
+        totalx = 0
+        refangle = (180.0 / self.bins) * (0.5 + self.bins // 2)
+        for i in range(self.bins):
+          binvalue = self.result[i][element]
+          totalsum = totalsum + binvalue
+          angle = (180.0 / self.bins) * (0.5 + i)
+          xvalue = math.cos(math.radians(angle-refangle))
+          totalx = totalx + xvalue
+        refmagnitude = totalx / self.bins
+        #self.showInfo("ref magnitude: " + str(refmagnitude))
+
+        # For each bin direction, calculate the semi-circular statistics
         for j in range(self.bins):
           sumx = 0  # sum of x values
-          sumy = 0  # sum of y values
-          sumlinelength = 0  # sum of line lengths
-          # Set the mean angle for sector j
-          # Change to Qt angles (0 = west, counter-clockwise)
-          mainangle = 90 - (j + 0.5) * sectorwidth - self.offsetangle
+          # Set the mean compass angle for sector j
+          binangle = (j + 0.5) * sectorwidth + self.offsetangle
           for i in range(self.bins):
             # Get the accumulated line length for the sector
             linelength = self.result[i][element]
-            # Accumulate line length
-            sumlinelength = sumlinelength + linelength
-            # Set the start angle for sector i
-            # Working on Qt angles (0 = west, counter-clockwise)
-            angle = 90 - i * sectorwidth - self.offsetangle
+            # Set the mean compass angle for sector i
+            angle = (i + 0.5) * sectorwidth + self.offsetangle
+            anglediff = angle - binangle
+            if (anglediff > 90):
+              anglediff = 180 - anglediff
+            elif (anglediff < -90):
+              anglediff = 180 + anglediff
             addx = (linelength *
-                    math.cos(math.radians(angle - sectorwidth / 2.0)))
-            addy = (linelength *
-                    math.sin(math.radians(angle - sectorwidth / 2.0)))
+                    math.cos(math.radians(anglediff)))
             sumx = sumx + addx
-            sumy = sumy + addy
-          # Directional statistics
-          normsumx = sumx / sumlinelength
-          normsumy = 0.0 - (sumy / sumlinelength)
-          return (normsumx, normsumy)
+          if sumx > maxvalue:
+            maxvalue = sumx
+            maxbin = j
+            maxbinangle = binangle
+        # Normalise to [0..1]
+        normalmax = maxvalue / totalsum
+        adjustedmax = (normalmax - refmagnitude) / (1-refmagnitude)
+        angle = maxbinangle
+        #self.showInfo("max angle (compass): " + str(angle) +
+        #              " max value: " + str(normalmax))
+        normx = math.cos(math.radians(angle)) * adjustedmax
+        normy = math.sin(math.radians(angle)) * adjustedmax
+        return (maxbin, maxbinangle, adjustedmax)
 
     # Update the visualisation of the bin structure
     def updateBins(self):
