@@ -119,6 +119,40 @@ version initially loaded during a session"), the SVG files have
 to be stored using unique file names.
 This produces a lot of SVG files that are not deleted by the plugin.
 
+Direction mean
+--------------
+Added in version 2.4.
+
+An indication of the direction mean (angle and strength) can be
+added to the rose diagrams.
+
+  .. |dirmeannon| image:: illustrations/rosedirmeannonneutral.png
+   :width: 200
+   :align: middle
+
+  .. |dirmeanlow| image:: illustrations/rosedirmeanneutrallow.png
+   :width: 200
+   :align: middle
+
+  .. |dirmeanhigh| image:: illustrations/rosedirmeanneutralhigh.png
+   :width: 200
+   :align: middle
+
+  .. |dirmean| image:: illustrations/rosedirmeanneutral.png
+   :width: 200
+   :align: middle
+
++---------------+---------------+---------------+---------------+
+| Direction mean                                                |
++---------------+---------------+---------------+---------------+
+| Not           | Orientation neutral                           |
++---------------+---------------+---------------+---------------+
+| or. neutral   | medium        | low           | high          |
++===============+===============+===============+===============+
+| |dirmeannon|  | |dirmean|     | |dirmeanlow|  | |dirmeanhigh| |
++---------------+---------------+---------------+---------------+
+
+
 The displayed histogram
 ========================
 
@@ -190,15 +224,16 @@ Options
 
 - The user can specify that the direction mean shall be included in
   the rose diagram(s).
+
   For the orientated option, a line that shows the average direction
   vector is added.
-  For the non-orientated option, the sector that has the strongest
-  mean direction is given a background colour, with the amouont of
-  colour indicating the strength of direction trend (white for
-  neutral, 100% colour if all line segments have a direction belongs
-  to this sector).
-  For the non-oriented option, sector bins are drawn transparent
-  for clarity.
+
+  For the non-orientated option, the sector that has the highest
+  mean direction value is given a background colour, with the amount
+  of colour indicating the strength of direction trend (white for
+  neutral, 100% colour if all line segments have a direction that
+  belongs to this sector).
+  For the non-oriented option, the sector bins are made transparent.
 
 
 Implementation
@@ -212,6 +247,41 @@ the length is added to the accumulated length for the bin.
 
 Polygons are split into its rings, and the line geometry of each ring
 is used for the calculations.
+
+Mean direction
+-----------------
+
+Non-orientation neutral
+  The normalised mean direction vector
+  (:math:`\boldsymbol{dist\_mean}`) is calculated from the bins
+  (sectors).
+  Each sector is represented by a vector
+  (:math:`\boldsymbol{sector}`) with length equal to the total length
+  of the line segments in the sector.
+  The middle of the sector is used as the sector vector angle.
+  The vector is normalised by dividing by the sum of the bin / sector
+  line lengths.
+
+  .. math::
+
+     \boldsymbol{dist\_mean} = \frac{\sum_{i=1}^{n} \boldsymbol{sector_i}}{\sum_{i=1}^{n} {|\boldsymbol{sector_i}|}}
+ 
+Orientation neutral
+  For each bin / sector, a mean vector is calculated by considering
+  only the bins / sectors that have a centre angle that is within 90°
+  from the centre angle of that bin / sector.
+  The sector with the maximum mean vector is chosen to represent the
+  mean direction.
+  The sector mean vector value (:math:`value`) is normalised by
+  subtracting the value (:math:`even\_dist\_value`) that would result
+  from an even distribution among the sectors and scaling the result
+  to a [0..100] scale using the sum of the bin lengths
+  (:math:`total\_sum`).
+
+  .. math::
+
+     normalised\_value = \frac{100 * (value - even\_dist\_value)}{(total\_sum - even\_dist\_value)}
+  
 
 Versions
 ===============

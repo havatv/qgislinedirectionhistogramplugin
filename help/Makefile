@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -D imgmath_latex=/usr/bin/latex
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = build
