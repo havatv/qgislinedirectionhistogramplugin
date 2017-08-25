@@ -152,17 +152,21 @@ Options
 =============
 
 - The user can specify if only selected features are to be used
-  (but if no features are selected, all features will be used)
+  (but if no features are selected, all features will be used).
+  This is the default if the layer has selected features.
 
-- The user can specify the number of direction bins.
+- The user can specify the number of direction bins (the default
+  is 8).
 
-- The user can specify an angle offset for the direction bins.
+- The user can specify an angle offset (clockwise from north)
+  for the direction bins (the default i 0).
 
-- The user can choose to ignore the "orientation" of the lines.  In
-  that case, two lines with opposite  directions will end up in the
-  same direction bin.
+- The user can choose to ignore the "orientation" of the lines.
+  In that case, two lines with opposite  directions will end up in
+  the same direction bin (this is the default).
 
-- The user can specify an output CSV file for the histogram.
+- The user can specify an output CSV file for the (over all)
+  histogram.
 
 - The user can specify if line segment length shall be used for
   weighting the bins (this is the default).
@@ -184,6 +188,18 @@ Options
   for storing the generated SVGs (that are used for styling the
   rose diagram layer.
 
+- The user can specify that the direction mean shall be included in
+  the rose diagram(s).
+  For the orientated option, a line that shows the average direction
+  vector is added.
+  For the non-orientated option, the sector that has the strongest
+  mean direction is given a background colour, with the amouont of
+  colour indicating the strength of direction trend (white for
+  neutral, 100% colour if all line segments have a direction belongs
+  to this sector).
+  For the non-oriented option, sector bins are drawn transparent
+  for clarity.
+
 
 Implementation
 ================
@@ -203,6 +219,7 @@ The current version is 2.0.
 
 - 2.4 (not released)
     - User interface change from toolbox to tab for options
+    - Added directional mean indicators to the rose diagrams
     - ...
 - 2.3
     - Added the logarithm option (#17)

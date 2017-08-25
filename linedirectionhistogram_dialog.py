@@ -171,7 +171,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.idfieldname = 'ID'
         self.svgfiles = []  # Array of SVG files - first element is None
         self.result = None
+        self.ringcolour = QColor(153, 153, 255)
         self.sectorcolour = QColor(240, 240, 240)
+        self.sectorcolourtrans = QColor(240, 240, 240, 0)
+        self.meanvectorcolour = QColor(153, 0, 0)
 
     def startWorker(self):
         #self.showInfo('Ready to start worker')
@@ -483,7 +486,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                           start.y() - radius,
                                           radius * 2.0,
                                           radius * 2.0)
-            circle.setPen(QPen(QColor(153, 153, 255)))
+            circle.setPen(QPen(self.ringcolour))
             self.histscene.addItem(circle)
 
         # Circular statistics
@@ -539,9 +542,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                   sector.setBrush(QBrush(QColor(255,
                                                 255 - (strength * 255),
                                                 255 - (strength * 255))))
-                  sector.setPen(QPen(QColor(255,
+                  myPen = QPen(QPen(QColor(255,
                                                 255 - (strength * 255),
                                                 255 - (strength * 255))))
+                  myPen.setWidth(1)
+                  sector.setPen(myPen)
                   self.histscene.addItem(sector)
                   # The sector in the opposite direction
                   sector = QGraphicsEllipseItem(start.x() - maxlength,
@@ -554,9 +559,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                   sector.setBrush(QBrush(QColor(255,
                                                 255 - (strength * 255),
                                                 255 - (strength * 255))))
-                  sector.setPen(QPen(QColor(255,
+                  myPen = QPen(QPen(QColor(255,
                                                 255 - (strength * 255),
                                                 255 - (strength * 255))))
+                  myPen.setWidth(1)
+                  sector.setPen(myPen)
                   self.histscene.addItem(sector)
 
                 #otherendpt = center - QPoint(dirline.x2(),
@@ -571,7 +578,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                               linelength * 2.0)
                 sector.setStartAngle(int(16 * angle))
                 sector.setSpanAngle(int(16 * (-sectorwidth)))
-                sector.setBrush(QBrush(self.sectorcolour))
+                if self.dirTrendCheckBox.isChecked():
+                    sector.setBrush(QBrush(self.sectorcolourtrans))
+                else:
+                    sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
                 # The sector in the opposite direction
                 sector = QGraphicsEllipseItem(start.x() - linelength,
@@ -581,7 +591,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
                                                self.offsetangle)))
                 sector.setSpanAngle(int(16 * (-sectorwidth)))
-                sector.setBrush(QBrush(self.sectorcolour))
+                if self.dirTrendCheckBox.isChecked():
+                    sector.setBrush(QBrush(self.sectorcolourtrans))
+                else:
+                    sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
         if not self.directionneutral and self.dirTrendCheckBox.isChecked():
                   # Get the mean
@@ -597,12 +610,12 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                             start.y() - circmeany * maxlength - radius,
                             radius * 2.0, radius * 2.0)
                   dirLine = QGraphicsLineItem(start.x(), start.y(), start.x() + circmeanx * maxlength, start.y() - circmeany * maxlength)
-                  myPen = QPen(QColor(153, 0, 0))
+                  myPen = QPen(self.meanvectorcolour)
                   myPen.setWidth(5)
                   myPen.setCapStyle(Qt.FlatCap)
                   dirLine.setPen(myPen)
-                  ptcircle.setPen(QPen(QColor(153, 0, 0)))
-                  ptcircle.setBrush(QBrush(QColor(153, 0, 0)))
+                  ptcircle.setPen(QPen(self.meanvectorcolour))
+                  ptcircle.setBrush(QBrush(self.meanvectorcolour))
                   self.histscene.addItem(ptcircle)
                   self.histscene.addItem(dirLine)
 
@@ -745,7 +758,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                           start.y() - radius,
                                           radius * 2.0,
                                           radius * 2.0)
-            circle.setPen(QPen(QColor(153, 153, 255)))
+            circle.setPen(QPen(self.ringcolour))
             self.setupScene.addItem(circle)
         for i in range(self.bins):
             linelength = maxlength
