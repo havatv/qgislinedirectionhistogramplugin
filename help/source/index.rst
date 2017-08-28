@@ -233,7 +233,7 @@ Options
   of colour indicating the strength of direction trend (white for
   neutral, 100% colour if all line segments have a direction that
   belongs to this sector).
-  For the non-oriented option, the sector bins are made transparent.
+  For the non-oriented option, the sector bins are transparent.
 
 
 Implementation

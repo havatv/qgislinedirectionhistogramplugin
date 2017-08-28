@@ -491,8 +491,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
         # Circular statistics
         maxbin = -1
-        binangle = 0.0
-        strength = 0.0
+        binangle = -90.0
+        strength = -1.0
         if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
             (maxbin, binangle, strength) = self.semiCircMean()
 
@@ -531,40 +531,35 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 self.histscene.addItem(sector)
             else:
                 if (self.dirTrendCheckBox.isChecked() and
-                    i == maxbin):
-                  # Show the direction trend for this bin:
-                  sector = QGraphicsEllipseItem(start.x() - maxlength,
-                                              start.y() - maxlength,
-                                              maxlength * 2.0,
-                                              maxlength * 2.0)
-                  sector.setStartAngle(int(16 * angle))
-                  sector.setSpanAngle(int(16 * (-sectorwidth)))
-                  sector.setBrush(QBrush(QColor(255,
-                                                255 - (strength * 255),
-                                                255 - (strength * 255))))
-                  myPen = QPen(QPen(QColor(255,
-                                                255 - (strength * 255),
-                                                255 - (strength * 255))))
-                  myPen.setWidth(1)
-                  sector.setPen(myPen)
-                  self.histscene.addItem(sector)
-                  # The sector in the opposite direction
-                  sector = QGraphicsEllipseItem(start.x() - maxlength,
-                                              start.y() - maxlength,
-                                              maxlength * 2.0,
-                                              maxlength * 2.0)
-                  sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
-                                               self.offsetangle)))
-                  sector.setSpanAngle(int(16 * (-sectorwidth)))
-                  sector.setBrush(QBrush(QColor(255,
-                                                255 - (strength * 255),
-                                                255 - (strength * 255))))
-                  myPen = QPen(QPen(QColor(255,
-                                                255 - (strength * 255),
-                                                255 - (strength * 255))))
-                  myPen.setWidth(1)
-                  sector.setPen(myPen)
-                  self.histscene.addItem(sector)
+                                              i == maxbin):
+                    # Show the direction trend for this bin using maxlength:
+                    sector = QGraphicsEllipseItem(start.x() - maxlength,
+                                                start.y() - maxlength,
+                                                maxlength * 2.0,
+                                                maxlength * 2.0)
+                    sector.setStartAngle(int(16 * angle))
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    # Use a red tone according to the strength
+                    colourintensity = 255 - (strength * 255)
+                    trendcolour = QColor(255, colourintensity, colourintensity)
+                    sector.setBrush(QBrush(trendcolour))
+                    myPen = QPen(QPen(trendcolour))
+                    myPen.setWidth(1)
+                    sector.setPen(myPen)
+                    self.histscene.addItem(sector)
+                    # The sector in the opposite direction
+                    sector = QGraphicsEllipseItem(start.x() - maxlength,
+                                                start.y() - maxlength,
+                                                maxlength * 2.0,
+                                                maxlength * 2.0)
+                    sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
+                                                 self.offsetangle)))
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    sector.setBrush(QBrush(trendcolour))
+                    myPen = QPen(QPen(trendcolour))
+                    myPen.setWidth(1)
+                    sector.setPen(myPen)
+                    self.histscene.addItem(sector)
 
                 #otherendpt = center - QPoint(dirline.x2(),
                 #                             dirline.y2())
@@ -597,27 +592,32 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     sector.setBrush(QBrush(self.sectorcolour))
                 self.histscene.addItem(sector)
         if not self.directionneutral and self.dirTrendCheckBox.isChecked():
-                  # Get the mean
-                  (circmeanx, circmeany) = self.circMean()
-                  #self.showInfo("Mean x: " + str(circmeanx) +
-                  #              " Mean y: " + str(circmeany))
-                  # atan2: Return atan(y / x), in radians.
-                  #meandirection = math.degrees(math.atan2(circmeany, circmeanx))
-                  ## Draw the point
-                  radius = 4
-                  ptcircle = QGraphicsEllipseItem(
-                            start.x() + circmeanx * maxlength - radius,
-                            start.y() - circmeany * maxlength - radius,
-                            radius * 2.0, radius * 2.0)
-                  dirLine = QGraphicsLineItem(start.x(), start.y(), start.x() + circmeanx * maxlength, start.y() - circmeany * maxlength)
-                  myPen = QPen(self.meanvectorcolour)
-                  myPen.setWidth(5)
-                  myPen.setCapStyle(Qt.FlatCap)
-                  dirLine.setPen(myPen)
-                  ptcircle.setPen(QPen(self.meanvectorcolour))
-                  ptcircle.setBrush(QBrush(self.meanvectorcolour))
-                  self.histscene.addItem(ptcircle)
-                  self.histscene.addItem(dirLine)
+            # Get the mean
+            (circmeanx, circmeany) = self.circMean()
+            #self.showInfo("Mean x: " + str(circmeanx) +
+            #              " Mean y: " + str(circmeany))
+            # atan2: Return atan(y / x), in radians.
+            #meandirection = math.degrees(math.atan2(circmeany,
+            #                                        circmeanx))
+            ## Draw the point
+            radius = 4
+            ptcircle = QGraphicsEllipseItem(
+                      start.x() + circmeanx * maxlength - radius,
+                      start.y() - circmeany * maxlength - radius,
+                      radius * 2.0, radius * 2.0)
+            dirLine = QGraphicsLineItem(start.x(), start.y(),
+                                        start.x() + circmeanx *
+                                        maxlength,
+                                        start.y() - circmeany *
+                                        maxlength)
+            myPen = QPen(self.meanvectorcolour)
+            myPen.setWidth(5)
+            myPen.setCapStyle(Qt.FlatCap)
+            dirLine.setPen(myPen)
+            ptcircle.setPen(QPen(self.meanvectorcolour))
+            ptcircle.setBrush(QBrush(self.meanvectorcolour))
+            self.histscene.addItem(ptcircle)
+            self.histscene.addItem(dirLine)
 
     # Calculate the circular mean for the current result
     # Returns the normalised vector (x,y) - (east, north)
@@ -640,7 +640,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Angles are geographic (0 = north, clockwise)
             # Working on Qt angles (0 = west, counter-clockwise)
             angle = 90 - ((i + 0.5) * sectorwidth + self.offsetangle)
-            #angle = (i + 0.5) * sectorwidth + self.offsetangle
             addx = linelength * math.cos(math.radians(angle))
             addy = linelength * math.sin(math.radians(angle))
             sumx = sumx + addx
@@ -671,39 +670,39 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         totalx = 0
         refangle = (180.0 / self.bins) * (0.5 + self.bins // 2)
         for i in range(self.bins):
-          binvalue = self.result[i][element]
-          totalsum = totalsum + binvalue
-          angle = (180.0 / self.bins) * (0.5 + i)
-          xvalue = math.cos(math.radians(angle-refangle))
-          totalx = totalx + xvalue
+            binvalue = self.result[i][element]
+            totalsum = totalsum + binvalue
+            angle = (180.0 / self.bins) * (0.5 + i)
+            xvalue = math.cos(math.radians(angle - refangle))
+            totalx = totalx + xvalue
         refmagnitude = totalx / self.bins
         #self.showInfo("ref magnitude: " + str(refmagnitude))
 
         # For each bin direction, calculate the semi-circular statistics
         for j in range(self.bins):
-          sumx = 0  # sum of x values
-          # Set the mean compass angle for sector j
-          binangle = (j + 0.5) * sectorwidth + self.offsetangle
-          for i in range(self.bins):
-            # Get the accumulated line length for the sector
-            linelength = self.result[i][element]
-            # Set the mean compass angle for sector i
-            angle = (i + 0.5) * sectorwidth + self.offsetangle
-            anglediff = angle - binangle
-            if (anglediff > 90):
-              anglediff = 180 - anglediff
-            elif (anglediff < -90):
-              anglediff = 180 + anglediff
-            addx = (linelength *
-                    math.cos(math.radians(anglediff)))
-            sumx = sumx + addx
-          if sumx > maxvalue:
-            maxvalue = sumx
-            maxbin = j
-            maxbinangle = binangle
+            sumx = 0  # sum of x values
+            # Set the mean compass angle for sector j
+            binangle = (j + 0.5) * sectorwidth + self.offsetangle
+            for i in range(self.bins):
+                # Get the accumulated line length for the sector
+                linelength = self.result[i][element]
+                # Set the mean compass angle for sector i
+                angle = (i + 0.5) * sectorwidth + self.offsetangle
+                anglediff = angle - binangle
+                if (anglediff > 90):
+                    anglediff = 180 - anglediff
+                elif (anglediff < -90):
+                    anglediff = 180 + anglediff
+                addx = (linelength *
+                        math.cos(math.radians(anglediff)))
+                sumx = sumx + addx
+            if sumx > maxvalue:
+                maxvalue = sumx
+                maxbin = j
+                maxbinangle = binangle
         # Normalise to [0..1]
         normalmax = maxvalue / totalsum
-        adjustedmax = (normalmax - refmagnitude) / (1-refmagnitude)
+        adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
         angle = maxbinangle
         #self.showInfo("max angle (compass): " + str(angle) +
         #              " max value: " + str(normalmax))
