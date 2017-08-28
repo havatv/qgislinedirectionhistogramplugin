@@ -34,16 +34,15 @@ Functionality
 
 - The number of direction bins for the histogram can be specified.
 
+  +---------------+----------------+
+  | Fewer bins    | More bins      |
+  +===============+================+
+  | |rose|        | |rose90_1|     |
+  +---------------+----------------+
+
 .. |rose90_1| image:: illustrations/rose90_1.png
    :width: 200
    :align: middle
-
-
-+---------------+----------------+
-| Fewer bins    | More bins      |
-+===============+================+
-| |rose|        | |rose90_1|     |
-+---------------+----------------+
 
 - All the direction bin sectors will have the same size (same number
   of degrees covered).  This type of angle histogram is also called
@@ -54,27 +53,27 @@ Functionality
 
 - The positions of the direction bins are shown graphically.
 
+  +------------------------------------------+
+  | Direction bins illustration and options  |
+  +==========================================+
+  | |specbins|                               |
+  +------------------------------------------+
+
 .. |specbins| image:: illustrations/specify_bins.png
    :align: middle
-
-+------------------------------------------+
-| Direction bins illustration and options  |
-+==========================================+
-| |specbins|                               |
-+------------------------------------------+
 
 - The user can choose if the histograms shall be "orientation"
   neutral (0-180 degrees instead of 0-360 degrees).
 
+  +----------------------+---------------------------------------------------------+
+  | Orientation neutral  | Not orientation neutral (with twice the number of bins) |
+  +======================+=========================================================+
+  | |rose|               | |rose36_5_360|                                          |
+  +----------------------+---------------------------------------------------------+
+
 .. |rose36_5_360| image:: illustrations/rose36_5_360.png
    :width: 200
    :align: middle
-
-+----------------------+-----------------------------------------------------+
-| Orientation neutral  | Not orientation neutral (twice the number of bins)  |
-+======================+=====================================================+
-| |rose|               | |rose36_5_360|                                      |
-+----------------------+-----------------------------------------------------+
 
 - A direction histogram (or rose diagram) is displayed, showing the
   distribution of the directions according to the chosen bins.
@@ -123,7 +122,7 @@ Direction mean
 --------------
 Added in version 2.4.
 
-An indication of the direction mean (angle and strength) can be
+An indication of the direction mean (direction and strength) can be
 added to the rose diagrams.
 
   .. |dirmeannon| image:: illustrations/rosedirmeannonneutral.png
