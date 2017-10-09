@@ -141,15 +141,24 @@ added to the rose diagrams.
    :width: 200
    :align: middle
 
-+---------------+---------------+---------------+---------------+
-| Direction mean                                                |
-+---------------+---------------+---------------+---------------+
-| Not           | Orientation neutral                           |
-+---------------+---------------+---------------+---------------+
-| or. neutral   | medium        | low           | high          |
-+===============+===============+===============+===============+
-| |dirmeannon|  | |dirmean|     | |dirmeanlow|  | |dirmeanhigh| |
-+---------------+---------------+---------------+---------------+
++-----------------+---------------+---------------+---------------+
+| Direction mean                                                  |
++-----------------+---------------+---------------+---------------+
+| Not or. neutral | Orientation neutral                           |
++-----------------+---------------+---------------+---------------+
+|                 | medium        | low           | high          |
++=================+===============+===============+===============+
+| |dirmeannon|    | |dirmean|     | |dirmeanlow|  | |dirmeanhigh| |
++-----------------+---------------+---------------+---------------+
+
+Non-orientation neutral
+  The direction mean is visualised by a "vector" in the rose diagram,
+  with length corresponding to the strength of the trend.
+
+Direction neutral
+  The direction mean is visualised by filling the bin with colour
+  according to the strength of the trend (white for direction neutral,
+  full colour for maximum strength).
 
 
 The displayed histogram
@@ -247,49 +256,60 @@ the length is added to the accumulated length for the bin.
 Polygons are split into its rings, and the line geometry of each ring
 is used for the calculations.
 
+
 Mean direction
 -----------------
 
+.. |distancemean| image:: illustrations/dist_mean_calc.png
+   :align: middle
+
+.. |normalised| image:: illustrations/normalised_value_calc.png
+   :align: middle
+
 Non-orientation neutral
   The normalised mean direction vector
-  (:math:`\boldsymbol{dist\_mean}`) is calculated from the bins
+  (**dist_mean**) is calculated using vector summation from the bins
   (sectors).
   Each sector is represented by a vector
-  (:math:`\boldsymbol{sector}`) with length equal to the total length
+  (**sector**) with length equal to the total length
   of the line segments in the sector.
-  The middle of the sector is used as the sector vector angle.
-  The vector is normalised by dividing by the sum of the bin / sector
-  line lengths.
+  The middle of the bin's sector is used as the angle for the sector
+  vector.
+  The result vector is normalised by dividing by the sum of the bin /
+  sector line lengths.
 
-  .. math::
+  |distancemean|
 
-     \boldsymbol{dist\_mean} = \frac{\sum_{i=1}^{n} \boldsymbol{sector_i}}{\sum_{i=1}^{n} {|\boldsymbol{sector_i}|}}
- 
 Orientation neutral
-  For each bin / sector, a mean vector is calculated by considering
-  only the bins / sectors that have a centre angle that is within 90°
-  from the centre angle of that bin / sector.
-  The sector with the maximum mean vector is chosen to represent the
-  mean direction.
-  The sector mean vector value (:math:`value`) is normalised by
-  subtracting the value (:math:`even\_dist\_value`) that would result
-  from an even distribution among the sectors and scaling the result
-  to a [0..100] scale using the sum of the bin lengths
-  (:math:`total\_sum`).
+  The mean direction is found by calculating the magnitude of the
+  "direction trend" for each of the bins.
 
-  .. math::
+  The "direction trend" for a bin, B, is calculated using the values
+  for all the bins within 90 degrees offset from the angle of B.
+  For each bin (including B), the angle between that bin and B is
+  calculated (using the angles of the middle of the bin sectors), and
+  the cosine of that angle is multiplied by the bin value.
 
-     normalised\_value = \frac{100 * (value - even\_dist\_value)}{(total\_sum - even\_dist\_value)}
-  
+  The "direction trend" of B is the sum of these values.
+  The bin with the largest value is taken to represent the direction
+  mean.
+
+  The value is then normalised to a [0..1] scale using the the sum
+  of the bin values (*total_sum*) as the maximum value, and the value
+  that had been obtained (*even_dist_value*) if the distribution of
+  line segment lengths among the bins had been even, as the minimum
+  value.
+
+  |normalised|
+
 
 Versions
 ===============
-The current version is 2.0.
+The current version is 2.4.
 
-- 2.4 (not released)
+- 2.4
+    - Added directional mean indicators to the rose diagrams (#14)
     - User interface change from toolbox to tab for options
-    - Added directional mean indicators to the rose diagrams
-    - ...
 - 2.3
     - Added the logarithm option (#17)
     - Fixed CSV output (#16)
