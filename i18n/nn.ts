@@ -44,7 +44,7 @@
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="804"/>
+        <location filename="linedirectionhistogram_dialog.py" line="786"/>
         <source>No input layer defined</source>
         <translation>Inndatasett manglar</translation>
     </message>
@@ -69,7 +69,7 @@
         <translation>Dreper arbeidsprosessen</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="807"/>
+        <location filename="linedirectionhistogram_dialog.py" line="789"/>
         <source>No features in input layer</source>
         <translation>Innlaget inneheld ingen objekt</translation>
     </message>
@@ -247,11 +247,6 @@
         <translation>Ved oppdeling lages det eitt rose-diagram for kvart polygon i oppdelingsdatasettet, og dette leggast til eit ut-lag</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog_base.ui" line="574"/>
-        <source>Logaritimic</source>
-        <translation>Logaritmisk</translation>
-    </message>
-    <message>
         <location filename="linedirectionhistogram_dialog_base.ui" line="55"/>
         <source>Bins</source>
         <translation>Bøtter</translation>
@@ -266,16 +261,21 @@
         <source>Include direction trend in the rose diagrams</source>
         <translation>Ta med retningstrend i rose-diagram</translation>
     </message>
+    <message>
+        <location filename="linedirectionhistogram_dialog_base.ui" line="574"/>
+        <source>Logarithmic</source>
+        <translation>Logaritmisk</translation>
+    </message>
 </context>
 <context>
     <name>parent</name>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="917"/>
+        <location filename="linedirectionhistogram_dialog.py" line="899"/>
         <source>Output CSV file</source>
         <translation>Ut-fil (CSV)</translation>
     </message>
     <message>
-        <location filename="linedirectionhistogram_dialog.py" line="935"/>
+        <location filename="linedirectionhistogram_dialog.py" line="917"/>
         <source>Directory for SVGs</source>
         <translation>atalog for SVG-filer</translation>
     </message>

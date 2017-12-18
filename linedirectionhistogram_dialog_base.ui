@@ -571,7 +571,7 @@
      <item>
       <widget class="QCheckBox" name="logaritmicCheckBox">
        <property name="text">
-        <string>Logaritimic</string>
+        <string>Logarithmic</string>
        </property>
       </widget>
      </item>
