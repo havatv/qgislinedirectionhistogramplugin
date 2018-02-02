@@ -305,8 +305,10 @@ Orientation neutral
 
 Versions
 ===============
-The current version is 2.4.
+The current version is 2.5.
 
+- 2.5
+    - Fixing the user interface to allow use on smaller screens (#20)
 - 2.4
     - Added directional mean indicators to the rose diagrams (#14)
     - User interface change from toolbox to tab for options

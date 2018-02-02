@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>511</width>
-    <height>954</height>
+    <width>493</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,14 +30,31 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QComboBox" name="InputLayer"/>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="selectedFeaturesCheckBox">
-        <property name="text">
-         <string>Selected features only</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <item>
+         <widget class="QComboBox" name="InputLayer">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="selectedFeaturesCheckBox">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Selected features only</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -50,13 +67,13 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_5">
-     <property name="title">
-      <string>Bins</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_7">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <layout class="QHBoxLayout" name="horizontalLayout_11">
+     <item>
+      <widget class="QGroupBox" name="groupBox_5">
+       <property name="title">
+        <string>Bins</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <property name="spacing">
@@ -193,51 +210,51 @@
           </item>
          </layout>
         </item>
-        <item>
-         <widget class="QGraphicsView" name="setupGraphicsView">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>150</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>150</width>
-            <height>150</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Illustration of the direction bin structure</string>
-          </property>
-          <property name="interactive">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>10000</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
-      </item>
-     </layout>
-    </widget>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>10000</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QGraphicsView" name="setupGraphicsView">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>150</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>150</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Illustration of the direction bin structure</string>
+       </property>
+       <property name="interactive">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="Line" name="line_3">
@@ -344,22 +361,8 @@
             </item>
            </layout>
           </item>
-          <item>
-           <spacer name="verticalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>10</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
          </layout>
          <zorder></zorder>
-         <zorder>verticalSpacer_4</zorder>
         </widget>
         <widget class="QWidget" name="tab_2">
          <attribute name="title">
@@ -452,29 +455,6 @@
     </widget>
    </item>
    <item>
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>10</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
       <widget class="QProgressBar" name="progressBar"/>
@@ -512,13 +492,6 @@
     </layout>
    </item>
    <item>
-    <widget class="Line" name="line_2">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QGraphicsView" name="histogramGraphicsView">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -528,8 +501,8 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>304</width>
-       <height>304</height>
+       <width>100</width>
+       <height>100</height>
       </size>
      </property>
      <property name="verticalScrollBarPolicy">
