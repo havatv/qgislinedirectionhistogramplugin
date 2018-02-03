@@ -305,10 +305,12 @@ Orientation neutral
 
 Versions
 ===============
-The current version is 2.5.
+The current version is 2.5.1
 
+- 2.5.1
+    - SVG export fixed (#21)
 - 2.5
-    - Fixing the user interface to allow use on smaller screens (#20)
+    - User interface modified to allow use on smaller screens (#20)
 - 2.4
     - Added directional mean indicators to the rose diagrams (#14)
     - User interface change from toolbox to tab for options

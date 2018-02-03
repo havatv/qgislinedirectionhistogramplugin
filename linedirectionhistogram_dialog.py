@@ -874,7 +874,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     # Save to SVG
     def saveAsSVG(self, location=None):
         savename = location
-        if location is None:
+        #if location is None:
+        if not isinstance(savename, basestring):
             savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
 "*.svg"))
         svgGen = QSvgGenerator()
