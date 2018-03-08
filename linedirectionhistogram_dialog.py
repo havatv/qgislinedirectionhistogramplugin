@@ -37,28 +37,50 @@ import math
 import tempfile  # rose diagram SVG files for rose layer rendering
 import uuid   # for generating unique file names (QGIS bug #13565)
 
-from PyQt4 import uic
-from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
-from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
-from PyQt4.QtCore import QSizeF, QSize, QRect, Qt
-from PyQt4.QtCore import QVariant
-from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
-from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
-from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
-from PyQt4.QtGui import QGraphicsView
-from PyQt4.QtGui import QPrinter, QPainter
-from PyQt4.QtGui import QApplication, QImage, QPixmap
-from PyQt4.QtSvg import QSvgGenerator
-from qgis.core import QgsMessageLog, QgsMapLayerRegistry, QgsMapLayer
-from qgis.core import QGis
+#from PyQt4 import uic
+#from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
+#from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
+#from PyQt4.QtCore import QSizeF, QSize, QRect, Qt
+#from PyQt4.QtCore import QVariant
+#from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
+#from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
+#from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
+#from PyQt4.QtGui import QGraphicsView
+#from PyQt4.QtGui import QPrinter, QPainter
+#from PyQt4.QtGui import QApplication, QImage, QPixmap
+#from PyQt.QtSvg import QSvgGenerator
+
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QObject, QThread, QCoreApplication
+##from qgis.PyQt.QtCore import SIGNAL
+from qgis.PyQt.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
+from qgis.PyQt.QtCore import QSizeF, QSize, QRect, Qt
+from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox
+from qgis.PyQt.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QGraphicsLineItem, QGraphicsEllipseItem
+from qgis.PyQt.QtWidgets import QGraphicsScene, QGraphicsView
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtGui import QBrush, QPen, QColor
+from qgis.PyQt.QtGui import QPainter, QImage, QPixmap
+from qgis.PyQt.QtPrintSupport import QPrinter
+from qgis.PyQt.QtSvg import QSvgGenerator
+
+#+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+#+from qgis.core import QgsWkbTypes
+from qgis.core import QgsProject
+
+from qgis.core import QgsMessageLog, QgsMapLayer
+#from qgis.core import QgsMapLayerRegistry
+from qgis.core import Qgis
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsField, QgsFeature
-from qgis.core import QgsCategorizedSymbolRendererV2, QgsSymbolV2
-from qgis.core import QgsSvgMarkerSymbolLayerV2, QgsRendererCategoryV2
+from qgis.core import QgsCategorizedSymbolRenderer, QgsSymbol
+from qgis.core import QgsSvgMarkerSymbolLayer, QgsRendererCategory
 #from qgis.gui import QgsMessageBar
 from qgis.utils import showPluginHelp
 
-from linedirectionhistogram_engine import Worker
+from .linedirectionhistogram_engine import Worker
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'linedirectionhistogram_dialog_base.ui'))
@@ -140,8 +162,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #    self.layerlistchanged)
         #self.iface.legendInterface().itemRemoved.connect(
         #    self.layerlistchanged)
-        QObject.disconnect(self.button_box, SIGNAL("rejected()"),
-                           self.reject)
+        #QObject.disconnect(self.button_box, SIGNAL("rejected()"),
+        #                   self.reject)
+        self.button_box.rejected.disconnect(self.reject)
 
         # Set instance variables
         self.worker = None
@@ -181,7 +204,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # Get the input layer
         layerindex = self.InputLayer.currentIndex()
         layerId = self.InputLayer.itemData(layerindex)
-        inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+        inputlayer = QgsProject.instance().mapLayer(layerId)
         if inputlayer is None:
             self.showError(self.tr('No input layer defined'))
             return
@@ -190,7 +213,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.histscene.clear()
             return
         self.bins = self.binsSpinBox.value()
+        self.showInfo("Outputfilename: " + str(self.result))
         self.outputfilename = self.outputFile.text()
+        
         self.directionneutral = False
         if self.directionNeutralCheckBox.isChecked():
             self.directionneutral = True
@@ -200,7 +225,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.useTilingCheckBox.isChecked():
             layerindex = self.TilingLayer.currentIndex()
             layerId = self.TilingLayer.itemData(layerindex)
-            tilelayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+            tilelayer = QgsProject.instance().mapLayer(layerId)
             if tilelayer is None:
                 self.showError(self.tr('No tile layer defined'))
                 self.histscene.clear()
@@ -315,7 +340,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.svgfiles[i + 1] = filename
                     ## Create the symbol for this ID value
                     # initialize with the default symbol for this geom type
-                    symbol = QgsSymbolV2.defaultSymbol(
+                    symbol = QgsSymbol.defaultSymbol(
                                 self.roseLayer.geometryType())
                     # configure an (SVG) symbol layer
                     layer_style = {}
@@ -324,26 +349,26 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     layer_style['outline'] = '#000000'
                     layer_style['outline-width'] = '6.8'
                     layer_style['size'] = '20'
-                    sym_layer = QgsSvgMarkerSymbolLayerV2.create(layer_style)
+                    sym_layer = QgsSvgMarkerSymbolLayer.create(layer_style)
                     # replace default symbol layer with the configured one
                     if sym_layer is not None:
                         symbol.changeSymbolLayer(0, sym_layer)
                     # create renderer category
-                    category = QgsRendererCategoryV2(i + 1, symbol,
+                    category = QgsRendererCategory(i + 1, symbol,
                                                      str(i + 1))
                     categories.append(category)
                 # create categorized renderer object
-                renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
+                renderer = QgsCategorizedSymbolRenderer(self.idfieldname,
                                                           categories)
                 if renderer is not None:
-                    self.roseLayer.setRendererV2(renderer)
-                QgsMapLayerRegistry.instance().addMapLayer(self.roseLayer)
+                    self.roseLayer.setRenderer(renderer)
+                QgsProject.instance().addMapLayer(self.roseLayer)
                 # Set the result to the over all histogram
                 self.result = ret[0]
             # Shall the result be reported (as a CSV file):
             if self.outputfilename != "":
                 try:
-                    with open(self.outputfilename, 'wb') as csvfile:
+                    with open(self.outputfilename, 'w') as csvfile:
                         csvwriter = csv.writer(csvfile, delimiter=';',
                                     quotechar='"', quoting=csv.QUOTE_MINIMAL)
                         csvwriter.writerow(["StartAngle", "EndAngle",
@@ -361,9 +386,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                 csvwriter.writerow([angle,
                                                angle + 360.0 / self.bins,
                                                ret[0][i][0], ret[0][i][1]])
-                    with open(self.outputfilename + 't', 'wb') as csvtfile:
+                    with open(self.outputfilename + 't', 'w') as csvtfile:
                         csvtfile.write('"Real","Real","Real","Integer"')
-                except IOError, e:
+                except IOError as e:
                     self.showInfo("Trouble writing the CSV file: " + str(e))
             # Draw the histogram
             self.drawHistogram()
@@ -388,7 +413,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #QgsMessageLog.logMessage(self.tr('Worker failed - exception') +
         #                         ': ' + str(exception_string),
         #                         self.LINEDIRECTIONHISTOGRAM,
-        #                         QgsMessageLog.CRITICAL)
+        #                         Qgis.Critical)
         self.showError(exception_string)
 
     def workerInfo(self, message_string):
@@ -396,14 +421,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         QgsMessageLog.logMessage(self.tr('Worker') + ': ' +
                                  message_string,
                                  self.LINEDIRECTIONHISTOGRAM,
-                                 QgsMessageLog.INFO)
+                                 Qgis.Info)
 
     def killWorker(self):
         """Kill the worker thread."""
         if self.worker is not None:
             QgsMessageLog.logMessage(self.tr('Killing worker'),
                                      self.LINEDIRECTIONHISTOGRAM,
-                                     QgsMessageLog.INFO)
+                                     Qgis.Info)
             self.worker.kill()
 
     def giveHelp(self):
@@ -770,7 +795,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     #    for alayer in self.iface.legendInterface().layers():
     #        if alayer.type() == QgsMapLayer.VectorLayer:
     #            if (alayer.geometryType() == QGis.Line or
-    #                alayer.geometryType() == QGis.Polygon):
+    #                alayer.geometryType() == QgsWkbTypes.PolygonGeometry):
     #                self.InputLayer.addItem(alayer.name(), alayer.id())
     #    # Set the previous selection
     #    for i in range(self.InputLayer.count()):
@@ -781,7 +806,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     def inputLayerChanged(self):
         layerindex = self.InputLayer.currentIndex()
         layerId = self.InputLayer.itemData(layerindex)
-        inputlayer = QgsMapLayerRegistry.instance().mapLayer(layerId)
+        inputlayer = QgsProject.instance().mapLayer(layerId)
         if inputlayer is None:
             self.showInfo(self.tr('No input layer defined'))
             return
@@ -802,7 +827,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #                                    duration=3)
         QgsMessageLog.logMessage('Error: ' + text,
                                  self.LINEDIRECTIONHISTOGRAM,
-                                 QgsMessageLog.CRITICAL)
+                                 Qgis.Critical)
 
     def showWarning(self, text):
         """Show a warning."""
@@ -811,7 +836,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #                                    duration=2)
         QgsMessageLog.logMessage('Warning: ' + text,
                                  self.LINEDIRECTIONHISTOGRAM,
-                                 QgsMessageLog.WARNING)
+                                 Qgis.Warning)
 
     def showInfo(self, text):
         """Show info."""
@@ -820,7 +845,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #                                    duration=2)
         QgsMessageLog.logMessage('Info: ' + text,
                                  self.LINEDIRECTIONHISTOGRAM,
-                                 QgsMessageLog.INFO)
+                                 Qgis.Info)
 
     # Implement the accept method to avoid exiting the dialog when
     # starting the work
@@ -898,7 +923,7 @@ def saveCSVDialog(parent):
         outDir = settings.value(key)
         filter = 'Comma Separated Value (*.csv)'
         outFilePath = QFileDialog.getSaveFileName(parent,
-                       parent.tr('Output CSV file'), outDir, filter)
+                       parent.tr('Output CSV file'), outDir, filter)[0]
         outFilePath = unicode(outFilePath)
         if outFilePath:
             root, ext = os.path.splitext(outFilePath)

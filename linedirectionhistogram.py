@@ -20,15 +20,23 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion
-from PyQt4.QtCore import QCoreApplication, QFileInfo
-from PyQt4.QtGui import QAction, QIcon
-from qgis.core import QGis, QgsMapLayer
+import os.path
+#from PyQt4.QtCore import QSettings, QTranslator, qVersion
+#from PyQt4.QtCore import QCoreApplication, QFileInfo
+#from PyQt4.QtGui import QAction, QIcon
+#from qgis.core import QGis, QgsMapLayer
+from qgis.core import QgsProject, QgsMapLayer, QgsWkbTypes
+from qgis.PyQt.QtCore import QFileInfo, QSettings, QCoreApplication
+from qgis.PyQt.QtCore import QTranslator, qVersion
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QMessageBox
+
+import sys
+sys.path.append(os.path.dirname(__file__))
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
-from linedirectionhistogram_dialog import linedirectionhistogramDialog
-import os.path
+from .linedirectionhistogram_dialog import linedirectionhistogramDialog
 
 
 # The following user interface components are referenced (in run()):
@@ -84,7 +92,8 @@ class linedirectionhistogram:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-        icon_path = ':/plugins/linedirectionhistogram/icon.png'
+        #icon_path = ':/plugins/linedirectionhistogram/icon.png'
+        icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
         # Create action that will start plugin configuration
         self.action = QAction(
             QIcon(icon_path),
@@ -121,17 +130,18 @@ class linedirectionhistogram:
         self.dlg.progressBar.setValue(0.0)
         # The input layer
         self.dlg.InputLayer.clear()
-        for alayer in self.iface.legendInterface().layers():
+        # for alayer in self.iface.legendInterface().layers():
+        for alayer in QgsProject.instance().mapLayers().values():
             # Look for vector line (and polygon) layers
             if (alayer.type() == QgsMapLayer.VectorLayer and
-                   (alayer.geometryType() == QGis.Line or
-                    alayer.geometryType() == QGis.Polygon)):
+                   (alayer.geometryType() == QgsWkbTypes.LineGeometry or
+                    alayer.geometryType() == QgsWkbTypes.PolygonGeometry)):
                 self.dlg.InputLayer.addItem(alayer.name(), alayer.id())
         self.dlg.TilingLayer.clear()
-        for alayer in self.iface.legendInterface().layers():
+        for alayer in QgsProject.instance().mapLayers().values():
             # Look for vector line (and polygon) layers
             if (alayer.type() == QgsMapLayer.VectorLayer and
-                   alayer.geometryType() == QGis.Polygon):
+                   alayer.geometryType() == QgsWkbTypes.PolygonGeometry):
                 self.dlg.TilingLayer.addItem(alayer.name(), alayer.id())
         """Run method that performs all the real work"""
         # show the dialog

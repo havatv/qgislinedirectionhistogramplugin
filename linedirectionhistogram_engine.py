@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from math import sqrt
-from PyQt4 import QtCore
-from PyQt4.QtCore import QCoreApplication
-from qgis.core import QGis
+#from PyQt4 import QtCore
+#from PyQt4.QtCore import QCoreApplication
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QCoreApplication
+#from qgis.PyQt.QtCore import QVariant
+from qgis.core import QgsWkbTypes
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsGeometry
 
@@ -90,8 +93,8 @@ class Worker(QtCore.QObject):
                 return
             # Check the geometry type
             geometryType = self.inputvectorlayer.geometryType()
-            if not (geometryType == QGis.Line or
-                    geometryType == QGis.Polygon):
+            if not (geometryType == QgsWkbTypes.LineGeometry or
+                    geometryType == QgsWkbTypes.PolygonGeometry):
                 self.error.emit('Only line and polygon layers are supported!')
                 self.finished.emit(False, None)
                 return
@@ -147,7 +150,7 @@ class Worker(QtCore.QObject):
                 # We use a vector of line geometries to be able to
                 # handle MultiPolylines and Polygons
                 inputlines = []
-                if geometryType == QGis.Line:
+                if geometryType == QgsWkbTypes.LineGeometry:
                     if feat.geometry().isMultipart():
                         multiline = feat.geometry().asMultiPolyline()
                         for geomline in multiline:
@@ -155,7 +158,7 @@ class Worker(QtCore.QObject):
                     else:
                         inputline = feat.geometry().asPolyline()
                         inputlines.append(inputline)
-                elif geometryType == QGis.Polygon:
+                elif geometryType == QgsWkbTypes.PolygonGeometry:
                     if feat.geometry().isMultipart():
                         multipoly = feat.geometry().asMultiPolygon()
                         for geompoly in multipoly:
@@ -179,7 +182,8 @@ class Worker(QtCore.QObject):
                         newlines = []
                         for linegeom in inputlines:
                             # Create a geometry for the overlay
-                            qgsgeom = QgsGeometry.fromPolyline(linegeom)
+                            #qgsgeom = QgsGeometry.fromPolyline(linegeom)
+                            qgsgeom = QgsGeometry.fromPolylineXY(linegeom)
                             # Clip
                             clipres = qgsgeom.intersection(tile)
                             newlines.append(clipres.asPolyline())

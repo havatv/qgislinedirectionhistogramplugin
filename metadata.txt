@@ -1,17 +1,12 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
-
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
 name=Line direction histogram
-qgisMinimumVersion=2.0
+qgisMinimumVersion=2.99
+qgisMaximumVersion=3.98
 description=Create a histogram (rose diagram) of line directions
 about=Visualises the distribution of line segment directions as a rose diagram (weighted using the line segment lengths). Can save the rose diagram as CSV, PDF or SVG.
-version=2.5.1
+version=3.0.0
 author=Håvard Tveite, NMBU
 email=havard.tveite@nmbu.no
 
@@ -19,7 +14,9 @@ email=havard.tveite@nmbu.no
 
 # Optional items:
 # Uncomment the following line and add your changelog:
-changelog=2.5.1
+changelog=3.0.0
+    -- Support for QGIS 3
+    2.5.1
     -- Fixed SVG export (#21)
     2.5
     -- Fixing the user interface to allow use on smaller screens (#20)

@@ -31,8 +31,8 @@ LOCALES = nn nb
 # If locales are enabled, set the name of the lrelease binary on your system. If
 # you have trouble compiling the translations, you may have to specify the full path to
 # lrelease
-#LRELEASE = lrelease
-LRELEASE = lrelease-qt4
+LRELEASE = lrelease
+#LRELEASE = lrelease-qt4
 
 
 # translation
@@ -69,14 +69,16 @@ PLUGIN_UPLOAD = $(c)/plugin_upload.py
 
 RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
 
-QGISDIR=.qgis2
+#QGISDIR=.qgis2
+QGISDIR=.local/share/QGIS/QGIS3/profiles/default
 
 default: compile
 
 compile: $(COMPILED_RESOURCE_FILES)
 
 %_rc.py : %.qrc $(RESOURCES_SRC)
-	pyrcc4 -o $*_rc.py  $<
+#	pyrcc4 -o $*_rc.py  $<
+	pyrcc5 -o $*_rc.py  $<
 
 %.qm : %.ts
 	$(LRELEASE) $<
@@ -169,6 +171,7 @@ transup:
 	@echo "------------------------------------------------"
 	@echo "Updating translation files with any new strings."
 	@echo "------------------------------------------------"
+	### pylupdate5 Makefile
 	### @chmod +x scripts/update-strings.sh
 	@scripts/update-strings.sh $(LOCALES)
 

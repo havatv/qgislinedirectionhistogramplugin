@@ -305,8 +305,10 @@ Orientation neutral
 
 Versions
 ===============
-The current version is 2.5.1
+The current version is 3.0.0
 
+- 3.0.0
+    - Support for QGIS 3
 - 2.5.1
     - SVG export fixed (#21)
 - 2.5
