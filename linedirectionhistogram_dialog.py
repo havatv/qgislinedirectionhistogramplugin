@@ -213,8 +213,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.histscene.clear()
             return
         self.bins = self.binsSpinBox.value()
-        self.showInfo("Outputfilename: " + str(self.result))
         self.outputfilename = self.outputFile.text()
+        self.showInfo("Outputfilename: " + str(self.outputfilename))
         
         self.directionneutral = False
         if self.directionNeutralCheckBox.isChecked():
@@ -883,10 +883,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #self.showInfo("showEvent")
         self.updateBins()
 
-    # Save to PDF
     def saveAsPDF(self):
-        savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
-                                                       "", "*.pdf"))
+        settings = QSettings()
+        key = '/UI/lastShapefileDir'
+        outDir = settings.value(key)
+        filter = 'PDF (*.pdf)'
+        savename, _filter = QFileDialog.getSaveFileName(self, "Save File",
+                                                        outDir, filter)
+        savename = unicode(savename)
         printer = QPrinter(QPrinter.HighResolution)
         printer.setPaperSize(QSizeF(100, 100), QPrinter.Millimeter)
         printer.setPageMargins(0, 0, 0, 0, QPrinter.Millimeter)
@@ -896,13 +900,22 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.histscene.render(p)
         p.end()
 
+        if savename:
+            outDir = os.path.dirname(savename)
+            settings.setValue(key, outDir)
+
+
     # Save to SVG
     def saveAsSVG(self, location=None):
         savename = location
-        #if location is None:
+        settings = QSettings()
+        key = '/UI/lastShapefileDir'
         if not isinstance(savename, basestring):
-            savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
-"*.svg"))
+            outDir = settings.value(key)
+            filter = 'SVG (*.svg)'
+            savename, _filter = QFileDialog.getSaveFileName(self, "Save to SVG",
+                                                   outDir, filter)
+            savename = unicode(savename)
         svgGen = QSvgGenerator()
         svgGen.setFileName(savename)
         svgGen.setSize(QSize(200, 200))
@@ -910,6 +923,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         painter = QPainter(svgGen)
         self.histscene.render(painter)
         painter.end()
+
+        if savename:
+            outDir = os.path.dirname(savename)
+            settings.setValue(key, outDir)
+
 
     def copyToClipboard(self):
         QApplication.clipboard().setImage(QImage(
@@ -921,10 +939,11 @@ def saveCSVDialog(parent):
         settings = QSettings()
         key = '/UI/lastShapefileDir'
         outDir = settings.value(key)
-        filter = 'Comma Separated Value (*.csv)'
-        outFilePath = QFileDialog.getSaveFileName(parent,
-                       parent.tr('Output CSV file'), outDir, filter)[0]
+        filter = 'CSV (*.csv)'
+        outFilePath, _filter = QFileDialog.getSaveFileName(parent,
+                       parent.tr('Output CSV file'), outDir, filter)
         outFilePath = unicode(outFilePath)
+        #parent.showInfo("outfilepath: " + outFilePath)
         if outFilePath:
             root, ext = os.path.splitext(outFilePath)
             if ext.upper() != '.CSV':
