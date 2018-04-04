@@ -119,7 +119,8 @@ class Worker(QtCore.QObject):
             statistics.append(mybins)
             # Get the features (iterator)
             if self.selectedfeaturesonly:
-                features = inputlayer.selectedFeaturesIterator()
+                features = inputlayer.getSelectedFeatures()
+#                features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
             # Create a vector of the (possible) tile (Polygon) geometries

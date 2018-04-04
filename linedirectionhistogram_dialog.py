@@ -37,25 +37,13 @@ import math
 import tempfile  # rose diagram SVG files for rose layer rendering
 import uuid   # for generating unique file names (QGIS bug #13565)
 
-#from PyQt4 import uic
-#from PyQt4.QtCore import SIGNAL, QObject, QThread, QCoreApplication
-#from PyQt4.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
-#from PyQt4.QtCore import QSizeF, QSize, QRect, Qt
-#from PyQt4.QtCore import QVariant
-#from PyQt4.QtGui import QDialog, QDialogButtonBox, QFileDialog
-#from PyQt4.QtGui import QGraphicsLineItem, QGraphicsEllipseItem
-#from PyQt4.QtGui import QGraphicsScene, QBrush, QPen, QColor
-#from PyQt4.QtGui import QGraphicsView
-#from PyQt4.QtGui import QPrinter, QPainter
-#from PyQt4.QtGui import QApplication, QImage, QPixmap
-#from PyQt.QtSvg import QSvgGenerator
-
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QObject, QThread, QCoreApplication
+from qgis.PyQt.QtCore import QObject, QThread, QCoreApplication, QUrl
 ##from qgis.PyQt.QtCore import SIGNAL
 from qgis.PyQt.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from qgis.PyQt.QtCore import QSizeF, QSize, QRect, Qt
 from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtWidgets import QWidget
 from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox
 from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.PyQt.QtWidgets import QGraphicsLineItem, QGraphicsEllipseItem
@@ -63,6 +51,7 @@ from qgis.PyQt.QtWidgets import QGraphicsScene, QGraphicsView
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtGui import QBrush, QPen, QColor
 from qgis.PyQt.QtGui import QPainter, QImage, QPixmap
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtPrintSupport import QPrinter
 from qgis.PyQt.QtSvg import QSvgGenerator
 
@@ -78,7 +67,7 @@ from qgis.core import QgsField, QgsFeature
 from qgis.core import QgsCategorizedSymbolRenderer, QgsSymbol
 from qgis.core import QgsSvgMarkerSymbolLayer, QgsRendererCategory
 #from qgis.gui import QgsMessageBar
-from qgis.utils import showPluginHelp
+#from qgis.utils import showPluginHelp
 
 from .linedirectionhistogram_engine import Worker
 
@@ -94,8 +83,8 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def __init__(self, iface, parent=None):
-        #self.iface = iface
-        #self.plugin_dir = os.path.dirname(__file__)
+        self.iface = iface
+        self.plugin_dir = os.path.dirname(__file__)
 
         # Some constants
         self.LINEDIRECTIONHISTOGRAM = self.tr('LineDirectionHistogram')
@@ -200,7 +189,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.meanvectorcolour = QColor(153, 0, 0)
 
     def startWorker(self):
-        #self.showInfo('Ready to start worker')
+        # self.showInfo('Ready to start worker')
         # Get the input layer
         layerindex = self.InputLayer.currentIndex()
         layerId = self.InputLayer.itemData(layerindex)
@@ -214,7 +203,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             return
         self.bins = self.binsSpinBox.value()
         self.outputfilename = self.outputFile.text()
-        self.showInfo("Outputfilename: " + str(self.outputfilename))
+        # self.showInfo("Outputfilename: " + str(self.outputfilename))
         
         self.directionneutral = False
         if self.directionNeutralCheckBox.isChecked():
@@ -250,25 +239,35 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 newfeature.setAttributes([id])
                 self.roseLayer.dataProvider().addFeatures([newfeature])
                 id = id + 1
+
+            # Check the coordinate systems
+            # Different CRSs? - give a warning!
+            if (inputlayer is not None and tilelayer is not None and
+                    inputlayer.crs() != tilelayer.crs()):
+                self.showWarning(
+                      'Layers have different CRS! - Input CRS authid: ' +
+                      str(inputlayer.crs().authid()) +
+                      ' - Tile CRS authid: ' +
+                      str(tilelayer.crs().authid()))
         # create a new worker instance
         worker = Worker(inputlayer, self.bins, self.directionneutral,
                         self.offsetangle,
                         self.selectedFeaturesCheckBox.isChecked(),
                         tilelayer)
-        ## configure the QgsMessageBar
-        #msgBar = self.iface.messageBar().createMessage(self.tr('Joining'), '')
-        #self.aprogressBar = QProgressBar()
-        #self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        #acancelButton = QPushButton()
-        #acancelButton.setText(self.CANCEL)
-        #acancelButton.clicked.connect(self.killWorker)
-        #msgBar.layout().addWidget(self.aprogressBar)
-        #msgBar.layout().addWidget(acancelButton)
-        ## Has to be popped after the thread has finished (in
-        ## workerFinished).
-        #self.iface.messageBar().pushWidget(msgBar,
-        #                                   self.iface.messageBar().INFO)
-        #self.messageBar = msgBar
+        # # configure the QgsMessageBar
+        # msgBar = self.iface.messageBar().createMessage(self.tr('Joining'), '')
+        # self.aprogressBar = QProgressBar()
+        # self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # acancelButton = QPushButton()
+        # acancelButton.setText(self.CANCEL)
+        # acancelButton.clicked.connect(self.killWorker)
+        # msgBar.layout().addWidget(self.aprogressBar)
+        # msgBar.layout().addWidget(acancelButton)
+        # # Has to be popped after the thread has finished (in
+        # # workerFinished).
+        # self.iface.messageBar().pushWidget(msgBar,
+        #                                    self.iface.messageBar().INFO)
+        # self.messageBar = msgBar
         # start the worker in a new thread
         thread = QThread(self)
         worker.moveToThread(thread)
@@ -276,7 +275,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         worker.error.connect(self.workerError)
         worker.status.connect(self.workerInfo)
         worker.progress.connect(self.progressBar.setValue)
-        #worker.progress.connect(self.aprogressBar.setValue)
+        # worker.progress.connect(self.aprogressBar.setValue)
         thread.started.connect(worker.run)
         thread.start()
         self.thread = thread
@@ -306,14 +305,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.thread.wait()
         self.thread.deleteLater()
         # remove widget from the message bar (pop)
-        #self.iface.messageBar().popWidget(self.messageBar)
+        # self.iface.messageBar().popWidget(self.messageBar)
         # Three outcomes:
         # 1) No data returned
         # 2) A vector with only one element: Draw the rose diagram
         # 3) A vector with several elements: Create a layer
         #                                    with rose diagrams as symbols
         if ok and ret is not None:
-            #self.showInfo("ret: " + str(ret))
+            # self.showInfo("ret: " + str(ret))
             # The first element is always the over all histogram
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
@@ -324,7 +323,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 if self.tileDirectory.text():
                     tmpdir = self.tileDirectory.text()
                 # Set the prefix for the SVG files
-                #tempfilepathprefix = tmpdir + '/qgisLDH_'
+                # tempfilepathprefix = tmpdir + '/qgisLDH_'
                 tempfilepathprefix = (tmpdir + '/qgisLDH_rose_' +
                                       str(uuid.uuid4()))
                 categories = []  # Renderer categories
@@ -338,7 +337,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     filename = (tempfilepathprefix + str(i + 1) + '.svg')
                     self.saveAsSVG(filename)
                     self.svgfiles[i + 1] = filename
-                    ## Create the symbol for this ID value
+                    # Create the symbol for this ID value
                     # initialize with the default symbol for this geom type
                     symbol = QgsSymbol.defaultSymbol(
                                 self.roseLayer.geometryType())
@@ -410,18 +409,20 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def workerError(self, exception_string):
         """Report an error from the worker."""
-        #QgsMessageLog.logMessage(self.tr('Worker failed - exception') +
-        #                         ': ' + str(exception_string),
-        #                         self.LINEDIRECTIONHISTOGRAM,
-        #                         Qgis.Critical)
-        self.showError(exception_string)
+        # QgsMessageLog.logMessage(self.tr('Worker failed - exception') +
+        #                          ': ' + str(exception_string),
+        #                          self.LINEDIRECTIONHISTOGRAM,
+        #                          Qgis.Critical)
+        self.showError(self.tr('Worker failed - exception') +
+                               ': ' + exception_string)
 
     def workerInfo(self, message_string):
         """Report an info message from the worker."""
-        QgsMessageLog.logMessage(self.tr('Worker') + ': ' +
-                                 message_string,
-                                 self.LINEDIRECTIONHISTOGRAM,
-                                 Qgis.Info)
+        # QgsMessageLog.logMessage(self.tr('Worker') + ': ' +
+        #                          message_string,
+        #                          self.LINEDIRECTIONHISTOGRAM,
+        #                          Qgis.Info)
+        self.showInfo(self.tr('Worker') + ': ' + message_string)
 
     def killWorker(self):
         """Kill the worker thread."""
@@ -432,10 +433,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.worker.kill()
 
     def giveHelp(self):
-        self.showInfo('Giving help')
-        #QDesktopServices.openUrl(QUrl.fromLocalFile(
-        #                 self.plugin_dir + "/help/html/index.html"))
-        showPluginHelp(None, "help/html/index")
+        # self.showInfo('Giving help')
+        QDesktopServices.openUrl(QUrl.fromLocalFile(
+                         self.plugin_dir + "/help/html/index.html"))
+        # showPluginHelp(None, "help/html/index")
     # end of giveHelp
 
     # Implement the reject method to have the possibility to avoid
@@ -931,7 +932,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def copyToClipboard(self):
         QApplication.clipboard().setImage(QImage(
-                        QPixmap.grabWidget(QGraphicsView(self.histscene))))
+                        QWidget.grab(QGraphicsView(self.histscene))))
+
+#                        QPixmap.grabWidget(QGraphicsView(self.histscene))))
 
 
 def saveCSVDialog(parent):

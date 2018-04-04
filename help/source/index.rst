@@ -81,10 +81,10 @@ Functionality
 - The histogram can be saved to a CSV file.
 
 - The histogram can be saved as PDF (100 mm by 100 mm) and SVG
-  (200 by 200). -- added in version 1.3
+  (200 by 200). -- added in version 1.3.
 
 - The histogram can be copied to the clipboard. -- added in version
-  1.4
+  1.4.
   
 - If the plugin window is resized, the direction histogram is also
   resized.
@@ -102,12 +102,17 @@ specified using a polygon layer.
 
 |tiling|
 
-- The polygon layer can be chosen
+- The polygon layer can be chosen.
 
-- The location for storing the SVG files can be specified
+- The location for storing the SVG files can be specified.
 
 - The SVG files are not deleted - the default location is the
-  system temporary file directory
+  system temporary file directory.
+
+- CRS transformations are not performed, so the tiling layer
+  should have the same CRS as the input layer.
+  A warning is given if the CRSs are different.
+
 
 All the other options are also respected when generating the
 rose diagrams for the tiles.
