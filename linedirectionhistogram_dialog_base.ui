@@ -284,7 +284,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab1">
          <attribute name="title">
@@ -460,13 +460,33 @@
         </widget>
         <widget class="QWidget" name="tab_3">
          <attribute name="title">
-          <string>Mean direction</string>
+          <string>Output</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_10">
           <item>
            <widget class="QCheckBox" name="dirTrendCheckBox">
             <property name="text">
-             <string>Include direction trend in the rose diagrams</string>
+             <string>Include direction trend</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="lineDirCB">
+            <property name="text">
+             <string>Include direction histogram</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="drawCirclesCB">
+            <property name="text">
+             <string>Include circles</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

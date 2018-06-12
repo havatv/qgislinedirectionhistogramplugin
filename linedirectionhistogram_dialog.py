@@ -312,8 +312,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     # Set the global result variable to be used for
                     # drawing the histogram
                     self.result = ret[i + 1]
-                    # Draw the histogram, and 
+                    # Draw the histogram
                     self.drawHistogram()
+                    # Create the renderer and add the layer
                     # Set the file name (and directory) for the SVG file
                     filename = (tempfilepathprefix + str(i + 1) + '.svg')
                     self.saveAsSVG(filename)
@@ -528,7 +529,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # The scene geomatry of the center point
         start = QPointF(self.histogramGraphicsView.mapToScene(center))
         # Create some concentric rings as background:
-        for i in range(self.NUMBEROFRINGS):
+        if self.drawCirclesCB.isChecked():
+          for i in range(self.NUMBEROFRINGS):
             step = maxlength / self.NUMBEROFRINGS
             radius = step * (i + 1)
             circle = QGraphicsEllipseItem(start.x() - radius,
@@ -563,14 +565,15 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             angle = 90 - i * sectorwidth - self.offsetangle
             # Draw the sector
             if not self.directionneutral:
-                sector = QGraphicsEllipseItem(start.x() - linelength,
-                                              start.y() - linelength,
-                                              linelength * 2.0,
-                                              linelength * 2.0)
-                sector.setStartAngle(int(16 * angle))
-                sector.setSpanAngle(int(16 * (-sectorwidth)))
-                sector.setBrush(QBrush(self.sectorcolour))
-                self.histscene.addItem(sector)
+                if self.lineDirCB.isChecked():
+                  sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                start.y() - linelength,
+                                                linelength * 2.0,
+                                                linelength * 2.0)
+                  sector.setStartAngle(int(16 * angle))
+                  sector.setSpanAngle(int(16 * (-sectorwidth)))
+                  sector.setBrush(QBrush(self.sectorcolour))
+                  self.histscene.addItem(sector)
             else:
                 # Shall direction trend be indicated
                 if (self.dirTrendCheckBox.isChecked() and
@@ -604,30 +607,31 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     sector.setPen(myPen)
                     self.histscene.addItem(sector)
                 # Draw the rose diagram sector according to the value
-                sector = QGraphicsEllipseItem(start.x() - linelength,
+                if self.lineDirCB.isChecked():
+                  sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
                                               linelength * 2.0)
-                sector.setStartAngle(int(16 * angle))
-                sector.setSpanAngle(int(16 * (-sectorwidth)))
-                if self.dirTrendCheckBox.isChecked():
-                    sector.setBrush(QBrush(self.sectorcolourtrans))
-                else:
-                    sector.setBrush(QBrush(self.sectorcolour))
-                self.histscene.addItem(sector)
-                # The sector in the opposite direction
-                sector = QGraphicsEllipseItem(start.x() - linelength,
-                                              start.y() - linelength,
-                                              linelength * 2.0,
-                                              linelength * 2.0)
-                sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
-                                               self.offsetangle)))
-                sector.setSpanAngle(int(16 * (-sectorwidth)))
-                if self.dirTrendCheckBox.isChecked():
-                    sector.setBrush(QBrush(self.sectorcolourtrans))
-                else:
-                    sector.setBrush(QBrush(self.sectorcolour))
-                self.histscene.addItem(sector)
+                  sector.setStartAngle(int(16 * angle))
+                  sector.setSpanAngle(int(16 * (-sectorwidth)))
+                  if self.dirTrendCheckBox.isChecked():
+                      sector.setBrush(QBrush(self.sectorcolourtrans))
+                  else:
+                      sector.setBrush(QBrush(self.sectorcolour))
+                  self.histscene.addItem(sector)
+                  # The sector in the opposite direction
+                  sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                start.y() - linelength,
+                                                linelength * 2.0,
+                                                linelength * 2.0)
+                  sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
+                                                 self.offsetangle)))
+                  sector.setSpanAngle(int(16 * (-sectorwidth)))
+                  if self.dirTrendCheckBox.isChecked():
+                      sector.setBrush(QBrush(self.sectorcolourtrans))
+                  else:
+                      sector.setBrush(QBrush(self.sectorcolour))
+                  self.histscene.addItem(sector)
         if not self.directionneutral and self.dirTrendCheckBox.isChecked():
             # Get the mean
             (circmeanx, circmeany) = self.circMean()
@@ -699,7 +703,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         sectorwidth = 360.0 / self.bins
         if self.directionneutral:  # Should always be the case
             sectorwidth = sectorwidth / 2.0
-        # Should line length of number of lines be used:
+        # Should line length or number of lines be used:
         element = 0
         if self.noWeightingCheckBox.isChecked():
             element = 1
