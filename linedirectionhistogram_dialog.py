@@ -130,6 +130,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.saveAsSVGButton.clicked.connect(self.saveAsSVG)
         self.copyToClipboardButton.clicked.connect(self.copyToClipboard)
         self.InputLayer.currentIndexChanged.connect(self.inputLayerChanged)
+        self.useTilingCheckBox.toggled.connect(self.tilingToggled)
 
         self.saveAsPDFButton.setEnabled(False)
         self.saveAsSVGButton.setEnabled(False)
@@ -218,6 +219,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.roseLayer.updateFields()
             # Add the IDs [1..number of "tiles"]
             id = 1
+            # Assumes that getFeatures will always return the features in
+            # the same sequence
             for feature in tilelayer.getFeatures():
                 newfeature = QgsFeature()
                 centroid = feature.geometry().pointOnSurface()
@@ -303,11 +306,13 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 tempfilepathprefix = (tmpdir + '/qgisLDH_rose_' +
                                       str(uuid.uuid4()))
                 categories = []  # Renderer categories
+                self.meandirstats = [] # For later saving to a CSV file
                 # Create the SVG files and symbols for the tiles
                 for i in range(len(ret) - 1):
                     # Set the global result variable to be used for
                     # drawing the histogram
                     self.result = ret[i + 1]
+                    # Draw the histogram, and 
                     self.drawHistogram()
                     # Set the file name (and directory) for the SVG file
                     filename = (tempfilepathprefix + str(i + 1) + '.svg')
@@ -332,6 +337,32 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     category = QgsRendererCategoryV2(i + 1, symbol,
                                                      str(i + 1))
                     categories.append(category)
+
+                    # Calculate the mean directions (angle and strength)
+                    strength = None
+                    meandir = None
+                    if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
+                        (maxbin, strength) = self.semiCircMean()
+                        meandir = maxbin
+                        #meandir = maxbin * 180 / self.bins
+                    if (self.dirTrendCheckBox.isChecked() and not self.directionneutral):
+                        (circmeanx, circmeany) = self.circMean()
+                        #self.showInfo("circmean x, y: " + str(circmeanx) + ' ,' + str(circmeany))
+                        if circmeanx is not None:
+                            strength = math.sqrt(circmeanx*circmeanx + circmeany*circmeany)
+                            #if circmeanx != 0:
+                            if circmeany != 0:
+                                #meandir = math.degrees(math.atan(circmeany / circmeanx))
+                                meandir = math.degrees(math.atan(circmeanx / circmeany))
+                                if meandir < 0:
+                                    meandir = 360 + meandir
+                            else:
+                                meandir = math.degrees(math.pi/2)
+                        #else:
+                        #    meandir = None
+                        #    strength = None
+                    #self.showInfo("meandir: " + str(meandir))
+                    self.meandirstats.append([i+1, meandir, strength])
                 # create categorized renderer object
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
                                                           categories)
@@ -346,23 +377,39 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     with open(self.outputfilename, 'wb') as csvfile:
                         csvwriter = csv.writer(csvfile, delimiter=';',
                                     quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        csvwriter.writerow(["StartAngle", "EndAngle",
-                                            "Length", "Number"])
-                        for i in range(len(ret[0])):
-                            if self.directionneutral:
-                                angle = (i * 180.0 / self.bins +
-                                                self.offsetangle)
-                                csvwriter.writerow([angle,
-                                                   angle + 180.0 / self.bins,
+                        if self.useTilingCheckBox.isChecked() and self.meanDirectionRB.isChecked():
+                            csvwriter.writerow(["Id", "Direction", "Strength"])
+                            for i in range(len(self.meandirstats)):
+                                if self.directionneutral and self.meandirstats[i][1] is not None:
+                                    angle = ((self.meandirstats[i][1]+0.5) * 180.0 / self.bins +
+                                                    self.offsetangle)
+                                else:
+                                    angle = (self.meandirstats[i][1])
+                                csvwriter.writerow([self.meandirstats[i][0],
+                                                    angle,
+                                                    self.meandirstats[i][2]])
+
+                            with open(self.outputfilename + 't', 'wb') as csvtfile:
+                                csvtfile.write('"Integer","Real","Real"')
+                        elif self.histogramRB.isChecked():
+                            csvwriter.writerow(["StartAngle", "EndAngle",
+                                                "Length", "Number"])
+                            for i in range(len(ret[0])):
+                                if self.directionneutral:
+                                    angle = (i * 180.0 / self.bins +
+                                                    self.offsetangle)
+                                    csvwriter.writerow([angle,
+                                                       angle + 180.0 / self.bins,
+                                                       ret[0][i][0], ret[0][i][1]])
+                                else:
+                                    angle = (i * 360.0 / self.bins +
+                                                             self.offsetangle)
+                                    csvwriter.writerow([angle,
+                                                   angle + 360.0 / self.bins,
                                                    ret[0][i][0], ret[0][i][1]])
-                            else:
-                                angle = (i * 360.0 / self.bins +
-                                                         self.offsetangle)
-                                csvwriter.writerow([angle,
-                                               angle + 360.0 / self.bins,
-                                               ret[0][i][0], ret[0][i][1]])
-                    with open(self.outputfilename + 't', 'wb') as csvtfile:
-                        csvtfile.write('"Real","Real","Real","Integer"')
+                            with open(self.outputfilename + 't', 'wb') as csvtfile:
+                                csvtfile.write('"Real","Real","Real","Integer"')
+
                 except IOError, e:
                     self.showInfo("Trouble writing the CSV file: " + str(e))
             # Draw the histogram
@@ -440,6 +487,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.result is not None:
             self.drawHistogram()
 
+    # Draws the histogram by adding elements to self.histscence
+    # No other updates of global variables
     def drawHistogram(self):
         # self.result shall contain the bins.  The first bin
         # starts at north + offsetangle, continuing clockwise
@@ -490,8 +539,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.histscene.addItem(circle)
 
         # Get circular statistics for the direction neutral case
-        maxbin = -1
-        strength = -1.0
+        #maxbin = -1
+        maxbin = None
+        #strength = -1.0
+        strength = None
         if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
             (maxbin, strength) = self.semiCircMean()
 
@@ -580,6 +631,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if not self.directionneutral and self.dirTrendCheckBox.isChecked():
             # Get the mean
             (circmeanx, circmeany) = self.circMean()
+            if circmeanx is None:
+                return
             # Draw a point
             radius = 4
             ptcircle = QGraphicsEllipseItem(
@@ -629,9 +682,12 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             sumx = sumx + addx
             sumy = sumy + addy
         # Directional statistics
-        normsumx = sumx / sumlinelength
-        normsumy = sumy / sumlinelength
-        return (normsumx, normsumy)
+        if sumlinelength == 0:
+            return (None, None)  # ????
+        else:
+            normsumx = sumx / sumlinelength
+            normsumy = sumy / sumlinelength
+            return (normsumx, normsumy)
 
     # Approximate the direction neutral circular mean for the current
     # result by returning the bin / sector number (starting at 0)
@@ -687,9 +743,15 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 maxvalue = sumx
                 maxbin = j
         # Normalise to [0..1]
-        normalmax = maxvalue / totalsum
+        if totalsum == 0:
+            return (None, None)    # ???
+        else:
+            normalmax = maxvalue / totalsum
         # Adjust the according to the lowest achievable value
-        adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
+        if refmagnitude == 1:
+            adjustedmax = normalmax    # ???
+        else:
+            adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
         return (maxbin, adjustedmax)
 
     # Update the visualisation of the bin structure
@@ -858,6 +920,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         #self.showInfo("showEvent")
         self.updateBins()
 
+    def tilingToggled(self, checked):
+        if checked:
+            self.meanDirectionRB.setEnabled(True)
+        else:
+            self.meanDirectionRB.setEnabled(False)
+            self.histogramRB.setChecked(True)
+
+
     # Save to PDF
     def saveAsPDF(self):
         savename = unicode(QFileDialog.getSaveFileName(self, "Save File",
@@ -871,7 +941,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.histscene.render(p)
         p.end()
 
-    # Save to SVG
+    # Save to SVG using self.histscene
     def saveAsSVG(self, location=None):
         savename = location
         #if location is None:
