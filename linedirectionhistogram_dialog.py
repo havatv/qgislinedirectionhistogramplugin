@@ -378,6 +378,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                     quotechar='"', quoting=csv.QUOTE_MINIMAL)
                         if (self.useTilingCheckBox.isChecked() and
                                             self.meanDirectionRB.isChecked()):
+                            # Mean directions for the tiles - write to file
                             csvwriter.writerow(["Id", "Direction", "Strength"])
                             for i in range(len(self.meandirstats)):
                                 if (self.directionneutral and
@@ -394,6 +395,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                             with open(self.outputfilename + 't', 'wb') as csvtfile:
                                 csvtfile.write('"Integer","Real","Real"')
                         elif self.histogramRB.isChecked():
+                            # Over all rose diagram - write to file
                             csvwriter.writerow(["StartAngle", "EndAngle",
                                                 "Length", "Number"])
                             for i in range(len(ret[0])):
@@ -542,9 +544,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.histscene.addItem(circle)
 
         # Get circular statistics for the direction neutral case
-        #maxbin = -1
         maxbin = None
-        #strength = -1.0
         strength = None
         if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
             (maxbin, strength) = self.semiCircMean()
@@ -688,7 +688,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             sumy = sumy + addy
         # Directional statistics
         if sumlinelength == 0:
-            return (None, None)  # ????
+            return (None, None)
         else:
             normsumx = sumx / sumlinelength
             normsumy = sumy / sumlinelength
@@ -709,7 +709,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if self.noWeightingCheckBox.isChecked():
             element = 1
 
-        # Calculate the circle reference values for normalisation
+        # Calculate the circle reference values for normalisation.
+        # refmagnitude does not depend on the input data, only the
+        # number of bins, corresponds to an even circular distribution.
         # The "border" sectors will have an angle of 90 deg to the
         # reference sector for even numbers of sectors, and will
         # therefore not contribute.
@@ -749,14 +751,13 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 maxbin = j
         # Normalise to [0..1]
         if totalsum == 0:
-            return (None, None)    # ???
+            return (None, None)
         else:
             normalmax = maxvalue / totalsum
-        # Adjust the according to the lowest achievable value
-        if refmagnitude == 1:
-            adjustedmax = normalmax    # ???
-        else:
-            adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
+        # Adjust according to the lowest achievable value
+        # Division is safe - (largest possible value for
+        #                     refmagnitude is 0.63...)
+        adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
         return (maxbin, adjustedmax)
 
     # Update the visualisation of the bin structure
