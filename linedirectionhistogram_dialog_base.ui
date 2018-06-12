@@ -203,7 +203,7 @@
             <property name="sizeHint" stdset="0">
              <size>
               <width>20</width>
-              <height>10</height>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -220,7 +220,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>10000</width>
+         <width>0</width>
          <height>20</height>
         </size>
        </property>
@@ -284,7 +284,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab1">
          <attribute name="title">
@@ -339,7 +339,7 @@
               <item>
                <widget class="QLabel" name="label_4">
                 <property name="text">
-                 <string>File location for SVG files: </string>
+                 <string>File location for SVG files (optional): </string>
                 </property>
                </widget>
               </item>
@@ -361,8 +361,22 @@
             </item>
            </layout>
           </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
          <zorder></zorder>
+         <zorder>verticalSpacer</zorder>
         </widget>
         <widget class="QWidget" name="tab_2">
          <attribute name="title">
@@ -451,7 +465,7 @@
             <property name="sizeHint" stdset="0">
              <size>
               <width>20</width>
-              <height>40</height>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -498,7 +512,7 @@
             <property name="sizeHint" stdset="0">
              <size>
               <width>20</width>
-              <height>40</height>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -539,7 +553,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>100000</width>
+         <width>0</width>
          <height>20</height>
         </size>
        </property>
@@ -645,7 +659,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>40</width>
+         <width>0</width>
          <height>20</height>
         </size>
        </property>
