@@ -342,27 +342,21 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     # Calculate the mean directions (angle and strength)
                     strength = None
                     meandir = None
+                    # Handle the neutral direction case (mean sector)
                     if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
                         (maxbin, strength) = self.semiCircMean()
                         meandir = maxbin
-                        #meandir = maxbin * 180 / self.bins
+                    # Handle the non-direction neutral case (vector)
                     if (self.dirTrendCheckBox.isChecked() and not self.directionneutral):
                         (circmeanx, circmeany) = self.circMean()
-                        #self.showInfo("circmean x, y: " + str(circmeanx) + ' ,' + str(circmeany))
                         if circmeanx is not None:
                             strength = math.sqrt(circmeanx*circmeanx + circmeany*circmeany)
-                            #if circmeanx != 0:
                             if circmeany != 0:
-                                #meandir = math.degrees(math.atan(circmeany / circmeanx))
                                 meandir = math.degrees(math.atan(circmeanx / circmeany))
                                 if meandir < 0:
                                     meandir = 360 + meandir
                             else:
                                 meandir = math.degrees(math.pi/2)
-                        #else:
-                        #    meandir = None
-                        #    strength = None
-                    #self.showInfo("meandir: " + str(meandir))
                     self.meandirstats.append([i+1, meandir, strength])
                 # create categorized renderer object
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
@@ -378,14 +372,17 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     with open(self.outputfilename, 'wb') as csvfile:
                         csvwriter = csv.writer(csvfile, delimiter=';',
                                     quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        if self.useTilingCheckBox.isChecked() and self.meanDirectionRB.isChecked():
+                        if (self.useTilingCheckBox.isChecked() and
+                                            self.meanDirectionRB.isChecked()):
                             csvwriter.writerow(["Id", "Direction", "Strength"])
                             for i in range(len(self.meandirstats)):
-                                if self.directionneutral and self.meandirstats[i][1] is not None:
-                                    angle = ((self.meandirstats[i][1]+0.5) * 180.0 / self.bins +
-                                                    self.offsetangle)
+                                if (self.directionneutral and
+                                         self.meandirstats[i][1] is not None):
+                                    angle = ((self.meandirstats[i][1] + 0.5) *
+                                             180.0 / self.bins +
+                                             self.offsetangle)
                                 else:
-                                    angle = (self.meandirstats[i][1])
+                                    angle = self.meandirstats[i][1]
                                 csvwriter.writerow([self.meandirstats[i][0],
                                                     angle,
                                                     self.meandirstats[i][2]])
