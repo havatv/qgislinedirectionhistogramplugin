@@ -171,6 +171,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # ID field name - constant
         self.idfieldname = 'ID'
         self.svgfiles = []  # Array of SVG files - first element is None
+        # Global variable containing the data used for calculations:
         self.result = None
         self.ringcolour = QColor(153, 153, 255)
         self.sectorcolour = QColor(240, 240, 240)
@@ -308,9 +309,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 categories = []  # Renderer categories
                 self.meandirstats = [] # For later saving to a CSV file
                 # Create the SVG files and symbols for the tiles
+                # and collect mean directions for the csv file
                 for i in range(len(ret) - 1):
                     # Set the global result variable to be used for
-                    # drawing the histogram
+                    # calculating statistics and drawing the histogram
                     self.result = ret[i + 1]
                     # Draw the histogram
                     self.drawHistogram()
