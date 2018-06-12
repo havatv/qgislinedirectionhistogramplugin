@@ -307,7 +307,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 tempfilepathprefix = (tmpdir + '/qgisLDH_rose_' +
                                       str(uuid.uuid4()))
                 categories = []  # Renderer categories
-                self.meandirstats = [] # For later saving to a CSV file
+                self.meandirstats = []  # For later saving to a CSV file
                 # Create the SVG files and symbols for the tiles
                 # and collect mean directions for the csv file
                 for i in range(len(ret) - 1):
@@ -345,25 +345,35 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     strength = None
                     meandir = None
                     # Handle the direction neutral case (mean sector)
-                    if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
+                    if (self.dirTrendCheckBox.isChecked() and
+                                        self.directionneutral):
                         (maxbin, strength) = self.semiCircMean()
                         meandir = maxbin
                     # Handle the non-direction neutral case (mean vector)
-                    if (self.dirTrendCheckBox.isChecked() and not self.directionneutral):
+                    if (self.dirTrendCheckBox.isChecked() and
+                                    not self.directionneutral):
                         (circmeanx, circmeany) = self.circMean()
                         if circmeanx is not None:
-                            strength = math.sqrt(circmeanx*circmeanx + circmeany*circmeany)
+                            strength = math.sqrt(circmeanx * circmeanx +
+                                                   circmeany * circmeany)
                             if circmeany != 0:
-                                meandir = math.degrees(math.atan(circmeanx / circmeany))
-                                if meandir < 0:
-                                    meandir = 360 + meandir
+                                meandir = math.degrees(math.atan(circmeanx /
+                                                                  circmeany))
+                                if circmeanx > 0 and circmeany < 0:
+                                    meandir = 180.0 + meandir
+                                elif circmeanx < 0 and circmeany < 0:
+                                    meandir = 180.0 + meandir
+                                elif circmeanx < 0 and circmeany > 0:
+                                    meandir = 360.0 + meandir
+                                #if meandir < 0:
+                                #    meandir = 360 + meandir
                             else:
-                                meandir = math.degrees(math.pi/2)
+                                meandir = math.degrees(math.pi * 0.5)
                                 if circmeanx < 0:
-                                    meandir = math.degrees(-math.pi/2)
+                                    meandir = math.degrees(math.pi * 1.5)
                                 if meandir < 0:
                                     meandir = 360 + meandir
-                    self.meandirstats.append([i+1, meandir, strength])
+                    self.meandirstats.append([i + 1, meandir, strength])
                 # create categorized renderer object
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
                                                           categories)
@@ -535,15 +545,15 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         start = QPointF(self.histogramGraphicsView.mapToScene(center))
         # Create some concentric rings as background:
         if self.drawCirclesCB.isChecked():
-          for i in range(self.NUMBEROFRINGS):
-            step = maxlength / self.NUMBEROFRINGS
-            radius = step * (i + 1)
-            circle = QGraphicsEllipseItem(start.x() - radius,
+            for i in range(self.NUMBEROFRINGS):
+                step = maxlength / self.NUMBEROFRINGS
+                radius = step * (i + 1)
+                circle = QGraphicsEllipseItem(start.x() - radius,
                                           start.y() - radius,
                                           radius * 2.0,
                                           radius * 2.0)
-            circle.setPen(QPen(self.ringcolour))
-            self.histscene.addItem(circle)
+                circle.setPen(QPen(self.ringcolour))
+                self.histscene.addItem(circle)
 
         # Get circular statistics for the direction neutral case
         maxbin = None
@@ -569,14 +579,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Draw the sector
             if not self.directionneutral:
                 if self.lineDirCB.isChecked():
-                  sector = QGraphicsEllipseItem(start.x() - linelength,
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
                                                 start.y() - linelength,
                                                 linelength * 2.0,
                                                 linelength * 2.0)
-                  sector.setStartAngle(int(16 * angle))
-                  sector.setSpanAngle(int(16 * (-sectorwidth)))
-                  sector.setBrush(QBrush(self.sectorcolour))
-                  self.histscene.addItem(sector)
+                    sector.setStartAngle(int(16 * angle))
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    sector.setBrush(QBrush(self.sectorcolour))
+                    self.histscene.addItem(sector)
             else:
                 # Shall direction trend be indicated
                 if (self.dirTrendCheckBox.isChecked() and
@@ -611,30 +621,30 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     self.histscene.addItem(sector)
                 # Draw the rose diagram sector according to the value
                 if self.lineDirCB.isChecked():
-                  sector = QGraphicsEllipseItem(start.x() - linelength,
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
                                               linelength * 2.0)
-                  sector.setStartAngle(int(16 * angle))
-                  sector.setSpanAngle(int(16 * (-sectorwidth)))
-                  if self.dirTrendCheckBox.isChecked():
-                      sector.setBrush(QBrush(self.sectorcolourtrans))
-                  else:
-                      sector.setBrush(QBrush(self.sectorcolour))
-                  self.histscene.addItem(sector)
-                  # The sector in the opposite direction
-                  sector = QGraphicsEllipseItem(start.x() - linelength,
+                    sector.setStartAngle(int(16 * angle))
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    if self.dirTrendCheckBox.isChecked():
+                        sector.setBrush(QBrush(self.sectorcolourtrans))
+                    else:
+                        sector.setBrush(QBrush(self.sectorcolour))
+                    self.histscene.addItem(sector)
+                    # The sector in the opposite direction
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
                                                 start.y() - linelength,
                                                 linelength * 2.0,
                                                 linelength * 2.0)
-                  sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
+                    sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
                                                  self.offsetangle)))
-                  sector.setSpanAngle(int(16 * (-sectorwidth)))
-                  if self.dirTrendCheckBox.isChecked():
-                      sector.setBrush(QBrush(self.sectorcolourtrans))
-                  else:
-                      sector.setBrush(QBrush(self.sectorcolour))
-                  self.histscene.addItem(sector)
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    if self.dirTrendCheckBox.isChecked():
+                        sector.setBrush(QBrush(self.sectorcolourtrans))
+                    else:
+                        sector.setBrush(QBrush(self.sectorcolour))
+                    self.histscene.addItem(sector)
         if not self.directionneutral and self.dirTrendCheckBox.isChecked():
             # Get the mean
             (circmeanx, circmeany) = self.circMean()
@@ -934,7 +944,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         else:
             self.meanDirectionRB.setEnabled(False)
             self.histogramRB.setChecked(True)
-
 
     # Save to PDF
     def saveAsPDF(self):

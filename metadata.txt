@@ -11,7 +11,7 @@ name=Line direction histogram
 qgisMinimumVersion=2.0
 description=Create a histogram (rose diagram) of line directions
 about=Visualises the distribution of line segment directions as a rose diagram (weighted using the line segment lengths). Can save the rose diagram as CSV, PDF or SVG.
-version=2.5.1
+version=2.6
 author=Håvard Tveite, NMBU
 email=havard.tveite@nmbu.no
 
@@ -19,7 +19,10 @@ email=havard.tveite@nmbu.no
 
 # Optional items:
 # Uncomment the following line and add your changelog:
-changelog=2.5.1
+changelog=2.6
+    -- Added output flexibility (#23)
+    -- Added CSV output for the tile mean directions (#24)
+    2.5.1
     -- Fixed SVG export (#21)
     2.5
     -- Fixing the user interface to allow use on smaller screens (#20)

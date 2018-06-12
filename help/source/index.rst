@@ -118,6 +118,30 @@ version initially loaded during a session"), the SVG files have
 to be stored using unique file names.
 This produces a lot of SVG files that are not deleted by the plugin.
 
+Saving the tile mean directions to CSV
+......................................
+Added in version 2.6.
+
+When saving the tile mean directions to CSV, the result is
+a CSV file with three columns:
+
+- The first column ("ID") is an ID that identifies the tile.
+  This ID is stable for a tile polygon layer, so mean directions
+  for different datasets can be compared if the same tiling layer
+  is used.
+- The second column ("Direction") is the mean direction of the
+  mean direction sector (for the direction neutral case) or the
+  mean direction vector (for the non-direction neutral case).
+  The unit is degrees, and the range is 0 to 180 for the
+  direction neutral case and 0 to 360 for the non-direction
+  neutral case.  0 is grid north, 90 is grid east, 180 is grid
+  south.
+- The third column ("Strength") is the strength of the trend.
+  The value range is from 0 to 1.  1 corresponds to the case when
+  all line segments have the this direction (non-direction neutral
+  case), or all line directions are in the interval defined by the
+  current sector (direction neutral case).
+
 Direction mean
 --------------
 Added in version 2.4.
@@ -156,9 +180,10 @@ Non-orientation neutral
   with length corresponding to the strength of the trend.
 
 Direction neutral
-  The direction mean is visualised by filling the bin with colour
-  according to the strength of the trend (white for direction neutral,
-  full colour for maximum strength).
+  The direction mean is visualised by filling the sectors of the bin
+  that corresponds to the mean direction with colour according to the
+  strength of the trend (white for direction neutral, full colour for
+  maximum strength).
 
 
 The displayed histogram
@@ -191,58 +216,44 @@ data types of the CSV file columns.
 
 
 Options
-=============
+=======
 
-- The user can specify if only selected features are to be used
-  (but if no features are selected, all features will be used).
+The following options are available:
+
+- The user can specify if only selected features are to be used.
   This is the default if the layer has selected features.
-
 - The user can specify the number of direction bins (the default
   is 8).
-
 - The user can specify an angle offset (clockwise from north)
   for the direction bins (the default i 0).
-
 - The user can choose to ignore the "orientation" of the lines.
   In that case, two lines with opposite  directions will end up in
   the same direction bin (this is the default).
-
-- The user can specify an output CSV file for the (over all)
-  histogram.
-
+- The user can specify an output CSV file for either the (over
+  all) histogram, or the tile mean directions (in case a tiling
+  layer is used)
 - The user can specify if line segment length shall be used for
   weighting the bins (this is the default).
-
 - The user can choose to use the logarithm to define the radius of
   the sectors.
   The default is not to use the logarithm.
-
 - The user can choose to have the area of a sector of the
   histogram be proportional to the accumulated amount for
-  that sector.
+  that sector.  
   The default is that the length / radius of a sector is
   proportional to the accumulated amount (histogram like
   behaviour).
-
-- The user can choose to produce a point layer styled with rose
-  diagrams according to a tiling by a selected polygon layer.
+- The user can choose to produce a point layer ("RoseDiagrams")
+  styled with rose diagrams according to a tiling by a selected
+  polygon layer.
   For this option, it is also possible to specify the location
   for storing the generated SVGs (that are used for styling the
   rose diagram layer.
-
-- The user can specify that the direction mean shall be included in
-  the rose diagram(s).
-
-  For the orientated option, a line that shows the average direction
-  vector is added.
-
-  For the non-orientated option, the sector that has the highest
-  mean direction value is given a background colour, with the amount
-  of colour indicating the strength of direction trend (white for
-  neutral, 100% colour if all line segments have a direction that
-  belongs to this sector).
-  For the non-oriented option, the sector bins are transparent.
-
+- The user can specify what to include in the output graphics:
+  The (background) rings - the rings are useful for comparing the
+  lengths of the sectors; The direction histogram - the
+  distribution of directions over a number of direction bins;
+  The direction mean.
 
 Implementation
 ================
@@ -305,8 +316,11 @@ Orientation neutral
 
 Versions
 ===============
-The current version is 2.5.1
+The current version is 2.6
 
+- 2.6
+    - Added graphical output flexibility (#23)
+    - Added CSV output for the tile mean directions (#24)
 - 2.5.1
     - SVG export fixed (#21)
 - 2.5
