@@ -342,11 +342,11 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     # Calculate the mean directions (angle and strength)
                     strength = None
                     meandir = None
-                    # Handle the neutral direction case (mean sector)
+                    # Handle the direction neutral case (mean sector)
                     if (self.dirTrendCheckBox.isChecked() and self.directionneutral):
                         (maxbin, strength) = self.semiCircMean()
                         meandir = maxbin
-                    # Handle the non-direction neutral case (vector)
+                    # Handle the non-direction neutral case (mean vector)
                     if (self.dirTrendCheckBox.isChecked() and not self.directionneutral):
                         (circmeanx, circmeany) = self.circMean()
                         if circmeanx is not None:
@@ -357,6 +357,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                     meandir = 360 + meandir
                             else:
                                 meandir = math.degrees(math.pi/2)
+                                if circmeanx < 0:
+                                    meandir = math.degrees(-math.pi/2)
+                                if meandir < 0:
+                                    meandir = 360 + meandir
                     self.meandirstats.append([i+1, meandir, strength])
                 # create categorized renderer object
                 renderer = QgsCategorizedSymbolRendererV2(self.idfieldname,
