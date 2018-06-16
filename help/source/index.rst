@@ -118,30 +118,6 @@ version initially loaded during a session"), the SVG files have
 to be stored using unique file names.
 This produces a lot of SVG files that are not deleted by the plugin.
 
-Saving the tile mean directions to CSV
-......................................
-Added in version 2.6.
-
-When saving the tile mean directions to CSV, the result is
-a CSV file with three columns:
-
-- The first column ("ID") is an ID that identifies the tile.
-  This ID is stable for a tile polygon layer, so mean directions
-  for different datasets can be compared if the same tiling layer
-  is used.
-- The second column ("Direction") is the mean direction of the
-  mean direction sector (for the direction neutral case) or the
-  mean direction vector (for the non-direction neutral case).
-  The unit is degrees, and the range is 0 to 180 for the
-  direction neutral case and 0 to 360 for the non-direction
-  neutral case.  0 is grid north, 90 is grid east, 180 is grid
-  south.
-- The third column ("Strength") is the strength of the trend.
-  The value range is from 0 to 1.  1 corresponds to the case when
-  all line segments have the this direction (non-direction neutral
-  case), or all line directions are in the interval defined by the
-  current sector (direction neutral case).
-
 Direction mean
 --------------
 Added in version 2.4.
@@ -185,6 +161,30 @@ Direction neutral
   strength of the trend (white for direction neutral, full colour for
   maximum strength).
 
+
+Saving the tile mean directions to CSV
+......................................
+Added in version 2.6.
+
+When saving the tile mean directions to CSV, the result is
+a CSV file with three columns:
+
+- The first column ("ID") is an ID that identifies the tile.
+  This ID is stable for a tile polygon layer, so mean directions
+  for different datasets can be compared if the same tiling layer
+  is used.
+- The second column ("Direction") is the direction of the
+  mean direction sector (for the direction neutral case) or the
+  mean direction vector (for the non-direction neutral case).
+  The unit is degrees, and the range is 0 to 180 for the
+  direction neutral case and 0 to 360 for the non-direction
+  neutral case.  0 is grid north, 90 is grid east, 180 is grid
+  south.
+- The third column ("Strength") is the strength of the trend.
+  The value range is from 0 to 1.  1 corresponds to the case when
+  all line segments have this direction (non-direction neutral
+  case), or all line directions are in the interval defined by the
+  current sector (direction neutral case).
 
 The displayed histogram
 ========================
