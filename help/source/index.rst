@@ -362,6 +362,26 @@ Links
 
 `LineDirectionHistogram issues`_
 
+Citation
+==========
+
+Would you like to cite / reference this plugin?
+
+Tveite, H. (2015). The QGIS Line Direction Histogram Plugin.
+http://plugins.qgis.org/plugins/LineDirectionHistogram/.
+
+Bibtex:
+
+.. code-block:: latex
+
+  @misc{tveitesde,
+    author =   {Håvard Tveite},
+    title =    {The {QGIS} Line Direction Histogram Plugin},
+    howpublished = {\url{http://plugins.qgis.org/plugins/LineDirectionHistogram/}},
+    year = {2015--2018}
+  }
+
+
 .. _LineDirectionHistogram code repository: https://github.com/havatv/qgislinedirectionhistogramplugin.git
 .. _LineDirectionHistogram Plugin: https://plugins.qgis.org/plugins/LineDirectionHistogram/
 .. _LineDirectionHistogram issues: https://github.com/havatv/qgislinedirectionhistogramplugin/issues
