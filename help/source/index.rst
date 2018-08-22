@@ -310,8 +310,10 @@ Orientation neutral
 
 Versions
 ===============
-The current version is 3.0.0
+The current version is 3.0.1
 
+- 3.0.1
+    - Fixed issue with plugin icon not showing in the QGIS user interface (#25)
 - 3.0.0
     - Support for QGIS 3
 - 2.5.1
