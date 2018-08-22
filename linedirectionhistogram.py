@@ -22,15 +22,13 @@
 """
 import os.path
 from qgis.core import QgsProject, QgsMapLayer, QgsWkbTypes
-from qgis.PyQt.QtCore import QFileInfo, QSettings, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.PyQt.QtCore import QTranslator, qVersion
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 
-import sys
-sys.path.append(os.path.dirname(__file__))
 # Initialize Qt resources from file resources.py
-import resources_rc
+from .resources import *
 # Import the code for the dialog
 from .linedirectionhistogram_dialog import linedirectionhistogramDialog
 
@@ -51,14 +49,13 @@ class linedirectionhistogram:
         # Save a reference to the QGIS interface
         self.iface = iface
         # initialize the plugin directory
-        pluginPath = QFileInfo(os.path.realpath(__file__)).path()
+        pluginPath = os.path.dirname(__file__)
         # initialize the locale using the QGIS locale
         locale = QSettings().value('locale/userLocale')[0:2]
-        if QFileInfo(pluginPath).exists():
-            locale_path = os.path.join(
-                pluginPath,
-                'i18n',
-                '{}.qm'.format(locale))
+        locale_path = os.path.join(
+            pluginPath,
+            'i18n',
+            '{}.qm'.format(locale))
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
