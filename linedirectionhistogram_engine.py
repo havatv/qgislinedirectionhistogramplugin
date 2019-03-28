@@ -126,12 +126,10 @@ class Worker(QtCore.QObject):
             # Create a vector of the (possible) tile (Polygon) geometries
             tilegeoms = []
             if self.tilelayer is not None:
-                self.status.emit("Tiling!")
-                for tile in self.tilelayer.getFeatures():
-                    #self.status.emit("tile geom: " +
-                    #                 str(tile.geometry().asPolygon()))
-                    # Add the tile geometry to the vector
-                    tilegeoms.append(QgsGeometry(tile.geometry()))
+                self.status.emit("Using tiles!")
+                #tilegeometryType = self.tilelayer.geometryType()
+                for tilefeat in self.tilelayer.getFeatures():
+                    tilegeoms.append(tilefeat.geometry())
                 # Initialise and add bins for all the tiles
                 for i in range(len(tilegeoms)):
                     mybins = []
@@ -186,8 +184,20 @@ class Worker(QtCore.QObject):
                             #qgsgeom = QgsGeometry.fromPolyline(linegeom)
                             qgsgeom = QgsGeometry.fromPolylineXY(linegeom)
                             # Clip
+                            self.status.emit("qgsgeom wkbtype: " + str(qgsgeom.wkbType()) + " type:" + str(qgsgeom.type()))
+                            self.status.emit("tile wkbtype: " + str(tile.wkbType()) + " type:" + str(tile.type()))
                             clipres = qgsgeom.intersection(tile)
-                            newlines.append(clipres.asPolyline())
+                            if clipres.isMultipart():
+                                self.status.emit("clipres is multi - wkbtype: " +
+                                             str(clipres.wkbType()) + " type:" + str(clipres.type()))
+                                clipresparts = clipres.constParts()  
+                                # clipres.convertToType(QgsGeometry.Polyline, destMultipart=False)
+                                for clipline in clipresparts:
+                                    newlines.append(clipline)
+                            else:
+                                self.status.emit("clipres is single - wkbtype: " +
+                                             str(clipres.wkbType()) + " type:" + str(clipres.type()))
+                                newlines.append(clipres)
                         tilelinecoll[i + 1] = newlines
                         i = i + 1
                 ## Lines have been extracted from the feature
@@ -196,6 +206,12 @@ class Worker(QtCore.QObject):
                 for tilelines in tilelinecoll:  # Handling the tiles
                   for inputlinegeom in tilelines:  # Handling the lines
                     # Skip degenerate lines
+                    try:
+                        polyline = inputlinegeom.asPolyline()
+                        inputlinegeom = polyline
+                    except:
+                        self.status.emit("Exception with asPolyline")
+                        continue
                     if inputlinegeom is None or len(inputlinegeom) < 2:
                         continue
                     # Go through all the segments of this line
