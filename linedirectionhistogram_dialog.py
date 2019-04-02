@@ -39,7 +39,7 @@ import uuid   # for generating unique file names (QGIS bug #13565)
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QObject, QThread, QCoreApplication, QUrl
-##from qgis.PyQt.QtCore import SIGNAL
+# from qgis.PyQt.QtCore import SIGNAL
 from qgis.PyQt.QtCore import QPointF, QLineF, QRectF, QPoint, QSettings
 from qgis.PyQt.QtCore import QSizeF, QSize, QRect, Qt
 from qgis.PyQt.QtCore import QVariant
@@ -55,19 +55,19 @@ from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtPrintSupport import QPrinter
 from qgis.PyQt.QtSvg import QSvgGenerator
 
-#+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-#+from qgis.core import QgsWkbTypes
+# +from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+# +from qgis.core import QgsWkbTypes
 from qgis.core import QgsProject
 
 from qgis.core import QgsMessageLog, QgsMapLayer
-#from qgis.core import QgsMapLayerRegistry
+# from qgis.core import QgsMapLayerRegistry
 from qgis.core import Qgis
 from qgis.core import QgsVectorLayer
 from qgis.core import QgsField, QgsFeature
 from qgis.core import QgsCategorizedSymbolRenderer, QgsSymbol
 from qgis.core import QgsSvgMarkerSymbolLayer, QgsRendererCategory
-#from qgis.gui import QgsMessageBar
-#from qgis.utils import showPluginHelp
+# from qgis.gui import QgsMessageBar
+# from qgis.utils import showPluginHelp
 
 from .linedirectionhistogram_engine import Worker
 
@@ -118,6 +118,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         closeButton = self.button_box.button(QDialogButtonBox.Close)
         closeButton.setText(self.CLOSE)
 
+        self.colorButton = self.colorB
+        self.meanvectorcolour = QColor(153, 0, 0)
+        self.colorButton.setColor(self.meanvectorcolour)
+
         # Connect signals
         okButton.clicked.connect(self.startWorker)
         cancelButton.clicked.connect(self.killWorker)
@@ -147,18 +151,18 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.copyToClipboardButton.setEnabled(False)
         cancelButton.setEnabled(True)
 
-        #self.iface.legendInterface().itemAdded.connect(
-        #    self.layerlistchanged)
-        #self.iface.legendInterface().itemRemoved.connect(
-        #    self.layerlistchanged)
-        #QObject.disconnect(self.button_box, SIGNAL("rejected()"),
-        #                   self.reject)
+        # self.iface.legendInterface().itemAdded.connect(
+        #     self.layerlistchanged)
+        # self.iface.legendInterface().itemRemoved.connect(
+        #     self.layerlistchanged)
+        # QObject.disconnect(self.button_box, SIGNAL("rejected()"),
+        #                    self.reject)
         self.button_box.rejected.disconnect(self.reject)
 
         # Set instance variables
         self.worker = None
         self.inputlayerid = None
-        #self.layerlistchanging = False
+        # self.layerlistchanging = False
         self.bins = 8
         self.binsSpinBox.setValue(self.bins)
         # Direction neutrality is the default
@@ -186,7 +190,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.ringcolour = QColor(153, 153, 255)
         self.sectorcolour = QColor(240, 240, 240)
         self.sectorcolourtrans = QColor(240, 240, 240, 0)
-        self.meanvectorcolour = QColor(153, 0, 0)
 
     def startWorker(self):
         # self.showInfo('Ready to start worker')
@@ -204,7 +207,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.bins = self.binsSpinBox.value()
         self.outputfilename = self.outputFile.text()
         # self.showInfo("Outputfilename: " + str(self.outputfilename))
-        
         self.directionneutral = False
         if self.directionNeutralCheckBox.isChecked():
             self.directionneutral = True
@@ -255,7 +257,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                         self.selectedFeaturesCheckBox.isChecked(),
                         tilelayer)
         # # configure the QgsMessageBar
-        # msgBar = self.iface.messageBar().createMessage(self.tr('Joining'), '')
+        # msgBar = self.iface.messageBar().createMessage(self.tr('Joining'),
+        #                                                '')
         # self.aprogressBar = QProgressBar()
         # self.aprogressBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         # acancelButton = QPushButton()
@@ -312,7 +315,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # 3) A vector with several elements: Create a layer
         #                                    with rose diagrams as symbols
         if ok and ret is not None:
-            # self.showInfo("ret: " + str(ret))
+            self.showInfo("ret: " + str(ret))
             # The first element is always the over all histogram
             self.result = ret[0]
             if len(ret) > 1:  # Several elements - create SVG files for layer
@@ -471,7 +474,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # starts at north + offsetangle, continuing clockwise
         if self.result is None:
             return
-        #self.showInfo(str(self.result))
+        # self.showInfo(str(self.result))
         # Check which element should be used for the histogram
         element = 0
         if self.noWeightingCheckBox.isChecked():
@@ -557,9 +560,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                                 maxlength * 2.0)
                     sector.setStartAngle(int(16 * angle))
                     sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    redhue = QColor(153, 0, 0).hue()
+                    basecolourhue = self.colorButton.color().hue()
+                    buttoncolour = QColor.fromHsv(basecolourhue, 255, 255)
+                    self.colorButton.setColor(buttoncolour)
                     # Use a red tone according to the strength
                     colourintensity = 255 - (strength * 255)
-                    trendcolour = QColor(255, colourintensity, colourintensity)
+                    trendcolour = QColor.fromHsv(basecolourhue,
+                                                 strength * 255, 255)
                     sector.setBrush(QBrush(trendcolour))
                     myPen = QPen(QPen(trendcolour))
                     myPen.setWidth(1)
@@ -665,7 +673,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     # strength ([0..1]) of the direction trend.
     # Must only be applied in direction neutral mode.
     def semiCircMean(self):
-        #oddnumberofbins = self.bins % 2
+        # oddnumberofbins = self.bins % 2
         sectorwidth = 360.0 / self.bins
         if self.directionneutral:  # Should always be the case
             sectorwidth = sectorwidth / 2.0
@@ -786,30 +794,29 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 self.setupScene.addItem(QGraphicsLineItem(QLineF(start, end)))
         # end of updatebins
 
-    #def layerlistchanged(self):
-    #    self.layerlistchanging = True
-    #    # Repopulate the input and join layer combo boxes
-    #    # Save the currently selected input layer
-    #    inputlayerid = self.inputlayerid
-    #    self.InputLayer.clear()
-    #    # We are only interested in line and polygon layers
-    #    for alayer in self.iface.legendInterface().layers():
-    #        if alayer.type() == QgsMapLayer.VectorLayer:
-    #            if (alayer.geometryType() == QGis.Line or
-    #                alayer.geometryType() == QgsWkbTypes.PolygonGeometry):
-    #                self.InputLayer.addItem(alayer.name(), alayer.id())
-    #    # Set the previous selection
-    #    for i in range(self.InputLayer.count()):
-    #        if self.InputLayer.itemData(i) == inputlayerid:
-    #            self.InputLayer.setCurrentIndex(i)
-    #   self.layerlistchanging = False
+    # def layerlistchanged(self):
+    #     self.layerlistchanging = True
+    #     # Repopulate the input and join layer combo boxes
+    #     # Save the currently selected input layer
+    #     inputlayerid = self.inputlayerid
+    #     self.InputLayer.clear()
+    #     # We are only interested in line and polygon layers
+    #     for alayer in self.iface.legendInterface().layers():
+    #         if alayer.type() == QgsMapLayer.VectorLayer:
+    #             if (alayer.geometryType() == QGis.Line or
+    #                 alayer.geometryType() == QgsWkbTypes.PolygonGeometry):
+    #                 self.InputLayer.addItem(alayer.name(), alayer.id())
+    #     # Set the previous selection
+    #     for i in range(self.InputLayer.count()):
+    #         if self.InputLayer.itemData(i) == inputlayerid:
+    #             self.InputLayer.setCurrentIndex(i)
+    #    self.layerlistchanging = False
 
     def inputLayerChanged(self):
         layerindex = self.InputLayer.currentIndex()
         layerId = self.InputLayer.itemData(layerindex)
         inputlayer = QgsProject.instance().mapLayer(layerId)
         if inputlayer is None:
-            self.showInfo(self.tr('No input layer defined'))
             return
         if inputlayer.featureCount() == 0:
             self.showInfo(self.tr('No features in input layer'))
@@ -823,27 +830,27 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     def showError(self, text):
         """Show an error."""
-        #self.iface.messageBar().pushMessage(self.tr('Error'), text,
-        #                                    level=QgsMessageBar.CRITICAL,
-        #                                    duration=3)
+        # self.iface.messageBar().pushMessage(self.tr('Error'), text,
+        #                                     level=QgsMessageBar.CRITICAL,
+        #                                     duration=3)
         QgsMessageLog.logMessage('Error: ' + text,
                                  self.LINEDIRECTIONHISTOGRAM,
                                  Qgis.Critical)
 
     def showWarning(self, text):
         """Show a warning."""
-        #self.iface.messageBar().pushMessage(self.tr('Warning'), text,
-        #                                    level=QgsMessageBar.WARNING,
-        #                                    duration=2)
+        # self.iface.messageBar().pushMessage(self.tr('Warning'), text,
+        #                                     level=QgsMessageBar.WARNING,
+        #                                     duration=2)
         QgsMessageLog.logMessage('Warning: ' + text,
                                  self.LINEDIRECTIONHISTOGRAM,
                                  Qgis.Warning)
 
     def showInfo(self, text):
         """Show info."""
-        #self.iface.messageBar().pushMessage(self.tr('Info'), text,
-        #                                    level=QgsMessageBar.INFO,
-        #                                    duration=2)
+        # self.iface.messageBar().pushMessage(self.tr('Info'), text,
+        #                                     level=QgsMessageBar.INFO,
+        #                                     duration=2)
         QgsMessageLog.logMessage('Info: ' + text,
                                  self.LINEDIRECTIONHISTOGRAM,
                                  Qgis.Info)
@@ -875,13 +882,13 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
 
     # Overriding
     def resizeEvent(self, event):
-        #self.showInfo("resizeEvent")
+        # self.showInfo("resizeEvent")
         if self.result is not None:
             self.drawHistogram()
 
     # Overriding
     def showEvent(self, event):
-        #self.showInfo("showEvent")
+        # self.showInfo("showEvent")
         self.updateBins()
 
     def saveAsPDF(self):
@@ -905,7 +912,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             outDir = os.path.dirname(savename)
             settings.setValue(key, outDir)
 
-
     # Save to SVG
     def saveAsSVG(self, location=None):
         savename = location
@@ -914,8 +920,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         if not isinstance(savename, basestring):
             outDir = settings.value(key)
             filter = 'SVG (*.svg)'
-            savename, _filter = QFileDialog.getSaveFileName(self, "Save to SVG",
-                                                   outDir, filter)
+            savename, _filter = QFileDialog.getSaveFileName(self,
+                                                            "Save to SVG",
+                                                            outDir, filter)
             savename = unicode(savename)
         svgGen = QSvgGenerator()
         svgGen.setFileName(savename)
@@ -929,11 +936,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             outDir = os.path.dirname(savename)
             settings.setValue(key, outDir)
 
-
     def copyToClipboard(self):
         QApplication.clipboard().setImage(QImage(
                         QWidget.grab(QGraphicsView(self.histscene))))
-
 #                        QPixmap.grabWidget(QGraphicsView(self.histscene))))
 
 
@@ -946,7 +951,7 @@ def saveCSVDialog(parent):
         outFilePath, _filter = QFileDialog.getSaveFileName(parent,
                        parent.tr('Output CSV file'), outDir, filter)
         outFilePath = unicode(outFilePath)
-        #parent.showInfo("outfilepath: " + outFilePath)
+        # parent.showInfo("outfilepath: " + outFilePath)
         if outFilePath:
             root, ext = os.path.splitext(outFilePath)
             if ext.upper() != '.CSV':
@@ -961,7 +966,7 @@ def findTileDialog(parent):
         settings = QSettings()
         key = '/UI/lastShapefileDir'
         outDir = settings.value(key)
-        #filter = 'Comma Separated Value (*.csv)'
+        # filter = 'Comma Separated Value (*.csv)'
         outFilePath = QFileDialog.getExistingDirectory(parent,
                        parent.tr('Directory for SVGs'), outDir)
         outFilePath = unicode(outFilePath)

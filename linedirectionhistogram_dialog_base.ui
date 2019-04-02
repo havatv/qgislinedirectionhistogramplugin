@@ -106,7 +106,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>Assign line segments with opposite directions to the same bin</string>
+               <string>&lt;p&gt;Assign line segments with opposite directions to the same bin.&lt;/p&gt;</string>
               </property>
               <property name="text">
                <string>0-180 (&quot;orientation&quot; neutral)</string>
@@ -143,7 +143,7 @@
             <item>
              <widget class="QSpinBox" name="binsSpinBox">
               <property name="toolTip">
-               <string>Number of direction bins to use</string>
+               <string>&lt;p&gt;Number of direction bins to use&lt;/p&gt;</string>
               </property>
               <property name="minimum">
                <number>2</number>
@@ -180,7 +180,7 @@
             <item>
              <widget class="QSpinBox" name="offsetAngleSpinBox">
               <property name="toolTip">
-               <string>Angle offset in degrees, positive clockwise</string>
+               <string>&lt;p&gt;Angle offset in degrees, positive clockwise.&lt;/p&gt;</string>
               </property>
               <property name="minimum">
                <number>-360</number>
@@ -247,7 +247,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Illustration of the direction bin structure</string>
+        <string>&lt;p&gt;Illustration of the direction bin structure&lt;/p&gt;</string>
        </property>
        <property name="interactive">
         <bool>false</bool>
@@ -284,7 +284,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab1">
          <attribute name="title">
@@ -299,7 +299,7 @@
             <item>
              <widget class="QCheckBox" name="useTilingCheckBox">
               <property name="toolTip">
-               <string>Whan using tiling, a rose diagram is generated for each polygon, and added to an output layer</string>
+               <string>&lt;p&gt;Whan using tiling, a rose diagram is generated for each polygon, and added to an output layer.&lt;/p&gt;</string>
               </property>
               <property name="text">
                <string>Use tiling</string>
@@ -327,7 +327,7 @@
                <item>
                 <widget class="QComboBox" name="TilingLayer">
                  <property name="toolTip">
-                  <string>The polygon layer to use for tiling</string>
+                  <string>&lt;p&gt;The polygon layer to use for tiling&lt;/p&gt;</string>
                  </property>
                 </widget>
                </item>
@@ -339,12 +339,15 @@
               <item>
                <widget class="QLabel" name="label_4">
                 <property name="text">
-                 <string>File location for SVG files: </string>
+                 <string>File location for the SVG files: </string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QLineEdit" name="tileDirectory">
+                <property name="toolTip">
+                 <string>&lt;p&gt;Specify a file location for the SVG files that contain the rose diagrams used for styling the output point layer. Useful if you would like to save the rose diagram layer for later use.&lt;/p&gt;</string>
+                </property>
                 <property name="readOnly">
                  <bool>true</bool>
                 </property>
@@ -390,7 +393,7 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Optional output file (CSV) - click on the Browse button to specify</string>
+                <string>&lt;p&gt;Optional output file (CSV) - click on the Browse button to specify.&lt;/p&gt;</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -433,6 +436,28 @@
              <string>Include direction trend in the rose diagrams</string>
             </property>
            </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Color:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QgsColorButton" name="colorB">
+              <property name="color">
+               <color alpha="0">
+                <red>255</red>
+                <green>0</green>
+                <blue>0</blue>
+               </color>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <spacer name="verticalSpacer_5">
@@ -521,7 +546,7 @@
      <item>
       <widget class="QCheckBox" name="noWeightingCheckBox">
        <property name="toolTip">
-        <string>Do not use line segment length for weighting</string>
+        <string>&lt;p&gt;Do not use line segment length for weighting&lt;/p&gt;</string>
        </property>
        <property name="text">
         <string>No weighting on length</string>
@@ -564,7 +589,7 @@
      <item>
       <widget class="QCheckBox" name="proportionalAreaCheckBox">
        <property name="toolTip">
-        <string>Make sector areas proportional to the magnitudes (default is sector length/radius)</string>
+        <string>&lt;p&gt;Make sector areas proportional to the magnitudes (default is sector length/radius).&lt;/p&gt;</string>
        </property>
        <property name="text">
         <string>Area proportional</string>
@@ -598,7 +623,7 @@
      <item>
       <widget class="QPushButton" name="saveAsPDFButton">
        <property name="toolTip">
-        <string>Save as a 10cm by 10cm PDF</string>
+        <string>&lt;p&gt;Save as a 10cm by 10cm PDF&lt;/p&gt;</string>
        </property>
        <property name="text">
         <string>Save as PDF</string>
@@ -608,7 +633,7 @@
      <item>
       <widget class="QPushButton" name="saveAsSVGButton">
        <property name="toolTip">
-        <string>Save as a 200 by 200 pixel SVG</string>
+        <string>&lt;p&gt;Save as a 200 by 200 pixel SVG&lt;/p&gt;</string>
        </property>
        <property name="text">
         <string>Save as SVG</string>
@@ -632,6 +657,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsColorButton</class>
+   <extends>QToolButton</extends>
+   <header>qgscolorbutton.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

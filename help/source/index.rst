@@ -130,6 +130,9 @@ Added in version 2.4.
 An indication of the direction mean (direction and strength) can be
 added to the rose diagrams.
 
+The user can choose the base colour for the direction mean
+indication (added in version 3.1).
+
   .. |dirmeannon| image:: illustrations/rosedirmeannonneutral.png
    :width: 200
    :align: middle
@@ -248,6 +251,8 @@ Options
   belongs to this sector).
   For the non-oriented option, the sector bins are transparent.
 
+- The user can specify the base colour for the direction mean.
+
 
 Implementation
 ================
@@ -310,8 +315,10 @@ Orientation neutral
 
 Versions
 ===============
-The current version is 3.0.1
-
+The current version is 3.1
+- 3.1
+    - Fixed issue with geometry conversion for tiling (#27)
+    - Added possibility to specify the colour for the direction trend (#28)
 - 3.0.1
     - Fixed issue with plugin icon not showing in the QGIS user interface (#25)
     - Fixed issue with help not showing (#26)

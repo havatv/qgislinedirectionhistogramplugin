@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from math import sqrt
-#from PyQt4 import QtCore
-#from PyQt4.QtCore import QCoreApplication
+# from PyQt4 import QtCore
+# from PyQt4.QtCore import QCoreApplication
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QCoreApplication
-#from qgis.PyQt.QtCore import QVariant
+# from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsWkbTypes
 from qgis.core import QgsVectorLayer
-from qgis.core import QgsGeometry
+from qgis.core import QgsGeometry, QgsPolygon
 
 # Angles:
 # Real world angles are measured clockwise from the 12 o'clock
@@ -26,7 +26,7 @@ class Worker(QtCore.QObject):
     '''The worker that does the heavy lifting.
     The number and length of the line segments of the inputlayer
     line or polygon vector layer is calculated for each angle bin.
-    A vector of bins is returned.  Each bin contains the total
+    A list of bins is returned.  Each bin contains the total
     length and the number of line segments in the bin.
     '''
     # Define the signals used to communicate
@@ -84,14 +84,13 @@ class Worker(QtCore.QObject):
         self.increment = self.feature_count // 1000
 
     def run(self):
-        #self.status.emit('Started!')
         try:
             inputlayer = self.inputvectorlayer
             if inputlayer is None:
                 self.error.emit(self.tr('No input layer defined'))
                 self.finished.emit(False, None)
                 return
-            # Check the geometry type
+            # Get and check the geometry type of the input layer
             geometryType = self.inputvectorlayer.geometryType()
             if not (geometryType == QgsWkbTypes.LineGeometry or
                     geometryType == QgsWkbTypes.PolygonGeometry):
@@ -109,7 +108,7 @@ class Worker(QtCore.QObject):
                 self.finished.emit(False, None)
                 return
             self.increment = self.feature_count // 1000
-            # Initialise the result vector
+            # Initialise the result list
             statistics = []
             # Initialise the bins for the over all result
             mybins = []
@@ -123,11 +122,11 @@ class Worker(QtCore.QObject):
 #                features = inputlayer.selectedFeaturesIterator()
             else:
                 features = inputlayer.getFeatures()
-            # Create a vector of the (possible) tile (Polygon) geometries
+            # Create a list for the (possible) tile (Polygon)
+            # geometries
             tilegeoms = []
             if self.tilelayer is not None:
                 self.status.emit("Using tiles!")
-                #tilegeometryType = self.tilelayer.geometryType()
                 for tilefeat in self.tilelayer.getFeatures():
                     tilegeoms.append(tilefeat.geometry())
                 # Initialise and add bins for all the tiles
@@ -141,84 +140,113 @@ class Worker(QtCore.QObject):
                 # Allow user abort
                 if self.abort is True:
                     break
-                ## Prepare for the histogram creation by extracting
-                ## line geometries from the input layer
-                # We use a vector of polygon geometries to be able to
-                # handle MultiPolygons
-                inputpolygons = []
-                # We use a vector of line geometries to be able to
+                # Prepare for the histogram creation by extracting
+                # line geometries (QgsGeometry) from the input layer
+
+                # First we do all the lines of the layer.  Later we
+                # will do the lines per tile
+                # We use a list of line geometries to be able to
                 # handle MultiPolylines and Polygons
                 inputlines = []
+                geom = feat.geometry()  # QgsGeometry
                 if geometryType == QgsWkbTypes.LineGeometry:
-                    if feat.geometry().isMultipart():
-                        multiline = feat.geometry().asMultiPolyline()
-                        for geomline in multiline:
-                            inputlines.append(geomline)
+                    # Lines!
+                    if geom.isMultipart():
+                        theparts = geom.constParts()
+                        # QgsGeometryConstPartIterator
+                        # Go through the parts of the multigeometry
+                        for part in theparts:
+                            # QgsAbstractGeometry - QgsLineString
+                            partgeom = QgsGeometry.fromPolyline(part)
+                            inputlines.append(partgeom)  # QgsGeometry
                     else:
-                        inputline = feat.geometry().asPolyline()
-                        inputlines.append(inputline)
+                        inputlines.append(geom)
+                # There are only two possibilites for geometry type, so
+                # this elif: could be replaced with an else:
                 elif geometryType == QgsWkbTypes.PolygonGeometry:
-                    if feat.geometry().isMultipart():
-                        multipoly = feat.geometry().asMultiPolygon()
+                    # Polygons!
+                    # We use a list of polygon geometries to be able to
+                    # handle MultiPolygons
+                    inputpolygons = []
+                    if geom.isMultipart():
+                        # Multi polygon
+                        multipoly = geom.asMultiPolygon()
                         for geompoly in multipoly:
-                            inputpolygons.append(geompoly)
+                            # list of list of QgsPointXY
+                            # abstract geometry -> QgsGeometry polygon
+                            polygeometry = QgsGeometry.fromPolygonXY(geompoly)
+                            inputpolygons.append(polygeometry)
                     else:
-                        inputpolygon = feat.geometry().asPolygon()
-                        inputpolygons.append(inputpolygon)
+                        # Non-multi polygon
+                        # Make sure it is a QgsGeometry polygon
+                        singlegeom = geom.asPolygon()
+                        polygeometry = QgsGeometry.fromPolygonXY(singlegeom)
+                        inputpolygons.append(polygeometry)  # QgsGeometry
                     # Add the polygon rings
                     for polygon in inputpolygons:
-                        for ring in polygon:
-                            inputlines.append(ring)
-                # We introduce a vector of line geometries for the tiling
+                        # create a list of list of QgsPointXY
+                        poly = polygon.asPolygon()
+                        for ring in poly:
+                            # list of QgsPointXY
+                            # Create a QgsGeometry line
+                            geometryring = QgsGeometry.fromPolylineXY(ring)
+                            inputlines.append(geometryring)  # QgsGeometry
+                else:
+                    # We should never end up here
+                    self.status.emit("Unexpected geometry type!")
+                # We introduce a list of line geometries for the tiling
                 tilelinecoll = [None] * (len(tilegeoms) + 1)
                 # Use the first element to store all the input lines
                 # (for the over all histogram)
                 tilelinecoll[0] = inputlines
                 # Clip the lines based on the tile layer
                 if self.tilelayer is not None:
-                    i = 0
+                    i = 1  # The first one is used for the complete dataset
                     for tile in tilegeoms:  # Go through the tiles
+                        # Create a list for the lines in the tile
                         newlines = []
                         for linegeom in inputlines:
-                            # Create a geometry for the overlay
-                            #qgsgeom = QgsGeometry.fromPolyline(linegeom)
-                            qgsgeom = QgsGeometry.fromPolylineXY(linegeom)
+                            # QgsGeometry
                             # Clip
-                            self.status.emit("qgsgeom wkbtype: " + str(qgsgeom.wkbType()) + " type:" + str(qgsgeom.type()))
-                            self.status.emit("tile wkbtype: " + str(tile.wkbType()) + " type:" + str(tile.type()))
-                            clipres = qgsgeom.intersection(tile)
+                            clipres = linegeom.intersection(tile)
+                            if clipres.isEmpty():
+                                continue
                             if clipres.isMultipart():
-                                self.status.emit("clipres is multi - wkbtype: " +
-                                             str(clipres.wkbType()) + " type:" + str(clipres.type()))
-                                clipresparts = clipres.constParts()  
-                                # clipres.convertToType(QgsGeometry.Polyline, destMultipart=False)
+                                # MultiLineString
+                                clipresparts = clipres.constParts()
                                 for clipline in clipresparts:
-                                    newlines.append(clipline)
+                                  # Create a QgsGeometry line
+                                  linegeom = QgsGeometry.fromPolyline(clipline)
+                                  newlines.append(linegeom)  # QgsGeometry
                             else:
-                                self.status.emit("clipres is single - wkbtype: " +
-                                             str(clipres.wkbType()) + " type:" + str(clipres.type()))
+                                # ?
                                 newlines.append(clipres)
-                        tilelinecoll[i + 1] = newlines
+                        tilelinecoll[i] = newlines
                         i = i + 1
-                ## Lines have been extracted from the feature
-                ## - do calculations
+                # Do calculations (line length and directions)
                 j = 0  # Counter for the tiles
                 for tilelines in tilelinecoll:  # Handling the tiles
                   for inputlinegeom in tilelines:  # Handling the lines
-                    # Skip degenerate lines
-                    try:
-                        polyline = inputlinegeom.asPolyline()
-                        inputlinegeom = polyline
-                    except:
-                        self.status.emit("Exception with asPolyline")
+                    # QgsGeometry line - wkbType 2
+                    if inputlinegeom is None:
                         continue
-                    if inputlinegeom is None or len(inputlinegeom) < 2:
+                    numvert = 0
+                    for v in inputlinegeom.vertices():
+                       numvert = numvert + 1
+                    if numvert == 0:
+                        continue
+                    if numvert < 2:
+                        self.status.emit("Less than two vertices!")
                         continue
                     # Go through all the segments of this line
-                    thispoint = inputlinegeom[0]
-                    for i in range(len(inputlinegeom) - 1):
-                        nextpoint = inputlinegeom[i + 1]
-                        linelength = sqrt(thispoint.sqrDist(nextpoint))
+                    thispoint = inputlinegeom.vertexAt(0)  # QgsPoint
+                    first = True
+                    for v in inputlinegeom.vertices():
+                        if first:
+                            first = False
+                            continue
+                        nextpoint = v
+                        linelength = sqrt(thispoint.distanceSquared(nextpoint))
                         # Find the angle of the line segment
                         lineangle = thispoint.azimuth(nextpoint)
                         if lineangle < 0:
@@ -231,29 +259,32 @@ class Worker(QtCore.QObject):
                             fitbin = (int((lineangle - self.offsetangle) /
                                       self.binsize) % self.bins)
                         else:
-                            fitbin = (int((360 + lineangle - self.offsetangle)
-                                      / self.binsize) % self.bins)
+                            fitbin = (int((360 + lineangle -
+                                           self.offsetangle) / self.binsize) %
+                                      self.bins)
                         # Have to handle special case to keep index in range?
                         if fitbin == self.bins:
                             self.status.emit("fitbin == self.bins")
                             fitbin = 0
                         # Add to the length of the bin of this tile (j)
-                        statistics[j][fitbin][0] = (statistics[j][fitbin][0]
-                                                  + linelength)
+                        statistics[j][fitbin][0] = (statistics[j][fitbin][0] +
+                                                    linelength)
                         # Add to the number of line segments in the bin
-                        statistics[j][fitbin][1] = (statistics[j][fitbin][1]
-                                                  + 1)
+                        statistics[j][fitbin][1] = (statistics[j][fitbin][1] +
+                                                    1)
                         thispoint = nextpoint  # advance to the next point
                   j = j + 1  # Next tile
                 self.calculate_progress()
-        except:
-            import traceback
-            self.error.emit(traceback.format_exc())
+        except Exception as e:
+            self.status.emit("Exception occurred - " + str())
+            self.error.emit(str(e))
             self.finished.emit(False, None)
         else:
             if self.abort:
+                self.status.emit("Aborted")
                 self.finished.emit(False, None)
             else:
+                self.status.emit("Completed")
                 self.finished.emit(True, statistics)
 
     def calculate_progress(self):
