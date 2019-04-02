@@ -29,6 +29,10 @@
 #   directionNeutralCheckBox
 #   selectedFeaturesCheckBox
 #   noWeightingCheckBox
+#   dirTrendCheckBox
+#   roseCheckBox
+#   circlesCheckBox
+#   colorB
 #   inputLayer
 
 import os
@@ -141,6 +145,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         binsSBCh.connect(self.updateBins)
         offsetAngleSBCh = self.offsetAngleSpinBox.valueChanged[str]
         offsetAngleSBCh.connect(self.updateBins)
+        dirTrendCBCh = self.dirTrendCheckBox.stateChanged
+        dirTrendCBCh.connect(self.trend)
+
         self.saveAsPDFButton.clicked.connect(self.saveAsPDF)
         self.saveAsSVGButton.clicked.connect(self.saveAsSVG)
         self.copyToClipboardButton.clicked.connect(self.copyToClipboard)
@@ -508,7 +515,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # The scene geomatry of the center point
         start = QPointF(self.histogramGraphicsView.mapToScene(center))
         # Create some concentric rings as background:
-        for i in range(self.NUMBEROFRINGS):
+        if self.circlesCheckbox.isChecked():
+          for i in range(self.NUMBEROFRINGS):
             step = maxlength / self.NUMBEROFRINGS
             radius = step * (i + 1)
             circle = QGraphicsEllipseItem(start.x() - radius,
@@ -517,6 +525,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                           radius * 2.0)
             circle.setPen(QPen(self.ringcolour))
             self.histscene.addItem(circle)
+        #else:
+        #    radius = maxlength
+        #    circle = QGraphicsEllipseItem(start.x() - radius,
+        #                                  start.y() - radius,
+        #                                  radius * 2.0,
+        #                                  radius * 2.0)
+        #    circle.setPen(QPen(self.ringcolour))
+        #    self.histscene.addItem(circle)
 
         # Get circular statistics for the direction neutral case
         maxbin = -1
@@ -540,7 +556,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Working on Qt angles (0 = east, counter-clockwise)
             angle = 90 - i * sectorwidth - self.offsetangle
             # Draw the sector
-            if not self.directionneutral:
+            if not self.directionneutral and self.roseCheckBox.isChecked():
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
@@ -560,7 +576,6 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                                 maxlength * 2.0)
                     sector.setStartAngle(int(16 * angle))
                     sector.setSpanAngle(int(16 * (-sectorwidth)))
-                    redhue = QColor(153, 0, 0).hue()
                     basecolourhue = self.colorButton.color().hue()
                     buttoncolour = QColor.fromHsv(basecolourhue, 255, 255)
                     self.colorButton.setColor(buttoncolour)
@@ -586,31 +601,33 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     myPen.setWidth(1)
                     sector.setPen(myPen)
                     self.histscene.addItem(sector)
-                # Draw the rose diagram sector according to the value
-                sector = QGraphicsEllipseItem(start.x() - linelength,
-                                              start.y() - linelength,
-                                              linelength * 2.0,
-                                              linelength * 2.0)
-                sector.setStartAngle(int(16 * angle))
-                sector.setSpanAngle(int(16 * (-sectorwidth)))
-                if self.dirTrendCheckBox.isChecked():
-                    sector.setBrush(QBrush(self.sectorcolourtrans))
-                else:
-                    sector.setBrush(QBrush(self.sectorcolour))
-                self.histscene.addItem(sector)
-                # The sector in the opposite direction
-                sector = QGraphicsEllipseItem(start.x() - linelength,
-                                              start.y() - linelength,
-                                              linelength * 2.0,
-                                              linelength * 2.0)
-                sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
-                                               self.offsetangle)))
-                sector.setSpanAngle(int(16 * (-sectorwidth)))
-                if self.dirTrendCheckBox.isChecked():
-                    sector.setBrush(QBrush(self.sectorcolourtrans))
-                else:
-                    sector.setBrush(QBrush(self.sectorcolour))
-                self.histscene.addItem(sector)
+                # Shall the rose diagrams be included
+                if self.roseCheckBox.isChecked():
+                    # Draw the rose diagram sector according to the value
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                  start.y() - linelength,
+                                                  linelength * 2.0,
+                                                  linelength * 2.0)
+                    sector.setStartAngle(int(16 * angle))
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    if self.dirTrendCheckBox.isChecked():
+                       sector.setBrush(QBrush(self.sectorcolourtrans))
+                    else:
+                       sector.setBrush(QBrush(self.sectorcolour))
+                    self.histscene.addItem(sector)
+                    # The sector in the opposite direction
+                    sector = QGraphicsEllipseItem(start.x() - linelength,
+                                                  start.y() - linelength,
+                                                  linelength * 2.0,
+                                                  linelength * 2.0)
+                    sector.setStartAngle(int(16 * (270.0 - i * sectorwidth -
+                                                   self.offsetangle)))
+                    sector.setSpanAngle(int(16 * (-sectorwidth)))
+                    if self.dirTrendCheckBox.isChecked():
+                       sector.setBrush(QBrush(self.sectorcolourtrans))
+                    else:
+                       sector.setBrush(QBrush(self.sectorcolour))
+                    self.histscene.addItem(sector)
         if not self.directionneutral and self.dirTrendCheckBox.isChecked():
             # Get the mean
             (circmeanx, circmeany) = self.circMean()
@@ -725,6 +742,16 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # Adjust the according to the lowest achievable value
         adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
         return (maxbin, adjustedmax)
+
+
+    # React to changes to the directional trend checkbox
+    def trend(self):
+        if self.dirTrendCheckBox.isChecked():
+            self.roseCheckBox.setEnabled(True)
+        else:
+            self.roseCheckBox.setEnabled(False)
+            self.roseCheckBox.setChecked(True)
+
 
     # Update the visualisation of the bin structure
     def updateBins(self):
