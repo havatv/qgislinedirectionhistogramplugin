@@ -197,6 +197,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.ringcolour = QColor(153, 153, 255)
         self.sectorcolour = QColor(240, 240, 240)
         self.sectorcolourtrans = QColor(240, 240, 240, 0)
+        self.meandirections = []
+        self.strengths = []
 
     def startWorker(self):
         # self.showInfo('Ready to start worker')
@@ -238,6 +240,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Add the ID field / attribute
             self.roseLayer.dataProvider().addAttributes(
                        [QgsField(self.idfieldname, QVariant.Int)])
+            self.roseLayer.dataProvider().addAttributes(
+                       [QgsField("meandir", QVariant.Double)])
+            self.roseLayer.dataProvider().addAttributes(
+                       [QgsField("strength", QVariant.Double)])
             self.roseLayer.updateFields()
             # Add the IDs [1..number of "tiles"]
             id = 1
@@ -245,7 +251,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 newfeature = QgsFeature()
                 centroid = feature.geometry().pointOnSurface()
                 newfeature.setGeometry(centroid)
-                newfeature.setAttributes([id])
+                newfeature.setAttributes([id, 0.0, 0.0])
                 self.roseLayer.dataProvider().addFeatures([newfeature])
                 id = id + 1
 
@@ -322,6 +328,8 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # 3) A vector with several elements: Create a layer
         #                                    with rose diagrams as symbols
         if ok and ret is not None:
+            self.meandirections = []
+            self.strengths = []
             self.showInfo("ret: " + str(ret))
             # The first element is always the over all histogram
             self.result = ret[0]
@@ -342,6 +350,38 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     # Set the global result variable to be used for
                     # drawing the histogram
                     self.result = ret[i + 1]
+                    # Get the mean direction and strength for the tiles
+                    if self.directionneutral:
+                        (maxbin, strength) = self.semiCircMean()
+                        angledeg = (maxbin + 0.5) * 180.0 / self.bins + self.offsetangle
+                        if angledeg >= 180:
+                           angledeg = angledeg - 180
+                        if strength == 0:
+                            angledeg = 0
+                        self.meandirections.append(angledeg)
+                        self.strengths.append(strength)
+                    else:
+                        (xvalue, yvalue) = self.circMean()
+                        anglerad = math.atan2(xvalue, yvalue)
+                        angledeg = math.degrees(anglerad)
+                        if angledeg < 0:
+                            angledeg = angledeg + 360
+                        #if yvalue != 0:
+                        #    anglerad = math.atan2(xvalue, yvalue)
+                        #    angledeg = math.degrees(anglerad)
+                        #    if angledeg < 0:
+                        #        angledeg = 360 + angledeg
+                        #elif xvalue != 0:
+                        #    if xvalue > 0:
+                        #        angledeg = 90
+                        #    else:
+                        #        angledeg = 270
+                        #else:
+                        #    angledeg = 0.0
+                        self.meandirections.append(angledeg)
+                        strength = math.sqrt(xvalue*xvalue + yvalue*yvalue)
+                        self.strengths.append(strength)
+                        
                     self.drawHistogram()
                     # Set the file name (and directory) for the SVG file
                     filename = (tempfilepathprefix + str(i + 1) + '.svg')
@@ -366,6 +406,24 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     category = QgsRendererCategory(i + 1, symbol,
                                                      str(i + 1))
                     categories.append(category)
+                # update the rose layer
+                self.roseLayer.startEditing()
+                features = self.roseLayer.getFeatures()
+                dp = self.roseLayer.dataProvider()
+                mean_index = dp.fieldNameIndex("meandir")
+                strength_index = dp.fieldNameIndex("strength")
+                for f in features:
+                    id = f.id()
+                    self.showInfo("FID: " + str(id))
+                    meandir = self.meandirections[id-1]
+                    self.showInfo("meandir: " + str(meandir))
+                    self.roseLayer.changeAttributeValue(id, mean_index, meandir)
+                    strength = self.strengths[id-1]
+                    self.showInfo("strength: " + str(strength))
+                    self.roseLayer.changeAttributeValue(id, strength_index, strength)
+                    #self.roseLayer.updateFeature(f)
+                self.roseLayer.commitChanges()
+                # 
                 # create categorized renderer object
                 renderer = QgsCategorizedSymbolRenderer(self.idfieldname,
                                                           categories)
@@ -680,9 +738,12 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             sumx = sumx + addx
             sumy = sumy + addy
         # Directional statistics
-        normsumx = sumx / sumlinelength
-        normsumy = sumy / sumlinelength
-        return (normsumx, normsumy)
+        if sumlinelength == 0:
+            return (0, 0)
+        else:
+            normsumx = sumx / sumlinelength
+            normsumy = sumy / sumlinelength
+            return (normsumx, normsumy)
 
     # Approximate the direction neutral circular mean for the current
     # result by returning the bin / sector number (starting at 0)
@@ -737,11 +798,14 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             if sumx > maxvalue:
                 maxvalue = sumx
                 maxbin = j
-        # Normalise to [0..1]
-        normalmax = maxvalue / totalsum
-        # Adjust the according to the lowest achievable value
-        adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
-        return (maxbin, adjustedmax)
+        if totalsum == 0:
+            return (0, 0)
+        else:
+            # Normalise to [0..1]
+            normalmax = maxvalue / totalsum
+            # Adjust the according to the lowest achievable value
+            adjustedmax = (normalmax - refmagnitude) / (1 - refmagnitude)
+            return (maxbin, adjustedmax)
 
 
     # React to changes to the directional trend checkbox
@@ -753,7 +817,9 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             self.roseCheckBox.setChecked(True)
 
 
-    # Update the visualisation of the bin structure
+    # Update the visualisation of the bin structure,
+    # update UI components
+    # and set global variable self.bins
     def updateBins(self):
         self.directionneutral = False
         if self.directionNeutralCheckBox.isChecked():

@@ -260,11 +260,12 @@ Implementation
 The calculations of the histogram is performed in a separate thread.
 Each line geometry is traversed from start to end.
 For each segment of the line, the angle and length are calculated.
-The angle is used to determine which bin the segment falls into, and
+The angle is used to determine which bin the segment belongs to, and
 the length is added to the accumulated length for the bin.
 
-Polygons are split into its rings, and the line geometry of each ring
-is used for the calculations.
+Polygons are split into its rings (the outer ring and zero or more
+inner rings), and the line geometries of the rings are used for the
+calculations.
 
 
 Mean direction
@@ -279,7 +280,7 @@ Mean direction
 Non-orientation neutral
   The normalised mean direction vector
   (**dist_mean**) is calculated using vector summation from the bins
-  (sectors).
+  (sectors), not from the original lines.
   Each sector is represented by a vector
   (**sector**) with length equal to the total length
   of the line segments in the sector.
@@ -289,6 +290,10 @@ Non-orientation neutral
   sector line lengths.
 
   |distancemean|
+
+  This means that the mean direction is very sensitive to the number
+  of bins - the more bins, the more precise will the mean direction
+  be.
 
 Orientation neutral
   The mean direction is found by calculating the magnitude of the
@@ -316,11 +321,14 @@ Orientation neutral
 Versions
 ===============
 The current version is 3.1
+
 - 3.1
     - Fixed issue with geometry conversion for tiling (#27)
-    - Added possibility to specify the colour for the direction trend (#28)
+    - Added possibility to specify the colour for the direction trend
+      (#28)
 - 3.0.1
-    - Fixed issue with plugin icon not showing in the QGIS user interface (#25)
+    - Fixed issue with plugin icon not showing in the QGIS user
+      interface (#25)
     - Fixed issue with help not showing (#26)
 - 3.0.0
     - Support for QGIS 3
@@ -335,12 +343,15 @@ The current version is 3.1
     - Added the logarithm option (#17)
     - Fixed CSV output (#16)
 - 2.2
-    - Fixed angle offset issue (#15) and added some circular statistics output (#14)
+    - Fixed angle offset issue (#15) and added some circular
+      statistics output (#14)
 - 2.1
     - Fixed issue #13 (problems with multipart geometries)
 - 2.0
-    - Added option to generate a point layer with rose diagrams based on tiles provided through a polygon layer (#10, #11)
-    - Set the default state for "selected features only" based on the presence of a selection (#12)
+    - Added option to generate a point layer with rose diagrams based
+      on tiles provided through a polygon layer (#10, #11)
+    - Set the default state for "selected features only" based on the
+      presence of a selection (#12)
 - 1.6
     - Fixed progress bar issue (#9)
 - 1.5
