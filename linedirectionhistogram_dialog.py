@@ -152,6 +152,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         self.saveAsSVGButton.clicked.connect(self.saveAsSVG)
         self.copyToClipboardButton.clicked.connect(self.copyToClipboard)
         self.InputLayer.currentIndexChanged.connect(self.inputLayerChanged)
+        self.useTilingCheckBox.toggled.connect(self.tilingToggled)
 
         self.saveAsPDFButton.setEnabled(False)
         self.saveAsSVGButton.setEnabled(False)
@@ -505,7 +506,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                                     angle,
                                                     self.meandirstats[i][2]])
 
-                            with open(self.outputfilename + 't', 'wb') as csvtfile:
+                            with open(self.outputfilename + 't', 'w') as csvtfile:
                                 csvtfile.write('"Integer","Real","Real"')
                         elif self.histogramRB.isChecked():
                             csvwriter.writerow(["StartAngle", "EndAngle",
@@ -1055,6 +1056,13 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     def showEvent(self, event):
         # self.showInfo("showEvent")
         self.updateBins()
+
+    def tilingToggled(self, checked):
+        if checked:
+            self.meanDirectionRB.setEnabled(True)
+        else:
+            self.meanDirectionRB.setEnabled(False)
+            self.histogramRB.setChecked(True)
 
     def saveAsPDF(self):
         settings = QSettings()
