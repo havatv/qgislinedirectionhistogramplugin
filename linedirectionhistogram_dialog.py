@@ -30,8 +30,8 @@
 #   selectedFeaturesCheckBox
 #   noWeightingCheckBox
 #   dirTrendCheckBox
-#   roseCheckBox
-#   circlesCheckBox
+#   lineDirCB
+#   drawCirclesCB
 #   colorB
 #   inputLayer
 
@@ -590,7 +590,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
         # The scene geomatry of the center point
         start = QPointF(self.histogramGraphicsView.mapToScene(center))
         # Create some concentric rings as background:
-        if self.circlesCheckbox.isChecked():
+        if self.drawCirclesCB.isChecked():
           for i in range(self.NUMBEROFRINGS):
             step = maxlength / self.NUMBEROFRINGS
             radius = step * (i + 1)
@@ -631,7 +631,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
             # Working on Qt angles (0 = east, counter-clockwise)
             angle = 90 - i * sectorwidth - self.offsetangle
             # Draw the sector
-            if not self.directionneutral and self.roseCheckBox.isChecked():
+            if not self.directionneutral and self.lineDirCB.isChecked():
                 sector = QGraphicsEllipseItem(start.x() - linelength,
                                               start.y() - linelength,
                                               linelength * 2.0,
@@ -677,7 +677,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     sector.setPen(myPen)
                     self.histscene.addItem(sector)
                 # Shall the rose diagrams be included
-                if self.roseCheckBox.isChecked():
+                if self.lineDirCB.isChecked():
                     # Draw the rose diagram sector according to the value
                     sector = QGraphicsEllipseItem(start.x() - linelength,
                                                   start.y() - linelength,
@@ -828,10 +828,10 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
     # React to changes to the directional trend checkbox
     def trend(self):
         if self.dirTrendCheckBox.isChecked():
-            self.roseCheckBox.setEnabled(True)
+            self.lineDirCB.setEnabled(True)
         else:
-            self.roseCheckBox.setEnabled(False)
-            self.roseCheckBox.setChecked(True)
+            self.lineDirCB.setEnabled(False)
+            self.lineDirCB.setChecked(True)
 
 
     # Update the visualisation of the bin structure,
