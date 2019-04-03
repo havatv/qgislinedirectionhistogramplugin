@@ -284,7 +284,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab1">
          <attribute name="title">
@@ -364,8 +364,22 @@
             </item>
            </layout>
           </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
          <zorder></zorder>
+         <zorder>verticalSpacer</zorder>
         </widget>
         <widget class="QWidget" name="tab_2">
          <attribute name="title">
@@ -411,6 +425,42 @@
            </widget>
           </item>
           <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QRadioButton" name="histogramRB">
+              <property name="toolTip">
+               <string>Export direction histogram (ignoring the tiling)</string>
+              </property>
+              <property name="text">
+               <string>Histogram</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">CsvExportButtonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="meanDirectionRB">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="toolTip">
+               <string>Mean direction only (one row for each tile)</string>
+              </property>
+              <property name="text">
+               <string>Mean direction (for tiling)</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">CsvExportButtonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
            <spacer name="verticalSpacer_3">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -427,18 +477,31 @@
         </widget>
         <widget class="QWidget" name="tab_3">
          <attribute name="title">
-          <string>Mean direction</string>
+          <string>Output</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_10">
           <item>
-           <widget class="QCheckBox" name="dirTrendCheckBox">
-            <property name="text">
-             <string>Include direction trend in the rose diagrams</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QCheckBox" name="dirTrendCheckBox">
+              <property name="text">
+               <string>Include direction trend</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_10">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
             <item>
              <widget class="QLabel" name="label_3">
               <property name="text">
@@ -460,50 +523,27 @@
            </layout>
           </item>
           <item>
+           <widget class="QCheckBox" name="lineDirCB">
+            <property name="text">
+             <string>Include direction histograms (rose diagrams)</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="drawCirclesCB">
+            <property name="text">
+             <string>Include percentage circles</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="verticalSpacer_5">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab">
-         <attribute name="title">
-          <string>Rose diagram</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_11">
-          <item>
-           <widget class="QCheckBox" name="roseCheckBox">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="text">
-             <string>Draw rose diagrams</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="circlesCheckbox">
-            <property name="text">
-             <string>Include percentage circles in the diagrams</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
@@ -742,4 +782,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="CsvExportButtonGroup"/>
+ </buttongroups>
 </ui>
