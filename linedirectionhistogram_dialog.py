@@ -345,6 +345,7 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 tempfilepathprefix = (tmpdir + '/qgisLDH_rose_' +
                                       str(uuid.uuid4()))
                 categories = []  # Renderer categories
+                self.meandirstats = []  # For later saving to a CSV file
                 # Create the SVG files and symbols for the tiles
                 for i in range(len(ret) - 1):
                     # Set the global result variable to be used for
@@ -406,6 +407,41 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                     category = QgsRendererCategory(i + 1, symbol,
                                                      str(i + 1))
                     categories.append(category)
+
+                    # Calculate the mean directions (angle and strength)
+                    strength = None
+                    meandir = None
+                    # Handle the direction neutral case (mean sector)
+                    if (self.dirTrendCheckBox.isChecked() and
+                                        self.directionneutral):
+                        (maxbin, strength) = self.semiCircMean()
+                        meandir = maxbin
+                    # Handle the non-direction neutral case (mean vector)
+                    if (self.dirTrendCheckBox.isChecked() and
+                                    not self.directionneutral):
+                        (circmeanx, circmeany) = self.circMean()
+                        if circmeanx is not None:
+                            strength = math.sqrt(circmeanx * circmeanx +
+                                                   circmeany * circmeany)
+                            if circmeany != 0:
+                                meandir = math.degrees(math.atan(circmeanx /
+                                                                  circmeany))
+                                if circmeanx > 0 and circmeany < 0:
+                                    meandir = 180.0 + meandir
+                                elif circmeanx < 0 and circmeany < 0:
+                                    meandir = 180.0 + meandir
+                                elif circmeanx < 0 and circmeany > 0:
+                                    meandir = 360.0 + meandir
+                                #if meandir < 0:
+                                #    meandir = 360 + meandir
+                            else:
+                                meandir = math.degrees(math.pi * 0.5)
+                                if circmeanx < 0:
+                                    meandir = math.degrees(math.pi * 1.5)
+                                if meandir < 0:
+                                    meandir = 360 + meandir
+
+                    self.meandirstats.append([i + 1, meandir, strength])
                 # update the rose layer
                 self.roseLayer.startEditing()
                 features = self.roseLayer.getFeatures()
@@ -457,17 +493,17 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                                   self.meanDirectionRB.isChecked()):
                             # Mean directions for the tiles - write to file
                             csvwriter.writerow(["Id", "Direction", "Strength"])
-                            #for i in range(len(self.meandirstats)):
-                            #    if (self.directionneutral and
-                            #             self.meandirstats[i][1] is not None):
-                            #        angle = ((self.meandirstats[i][1] + 0.5) *
-                            #                 180.0 / self.bins +
-                            #                 self.offsetangle)
-                            #    else:
-                            #        angle = self.meandirstats[i][1]
-                            #    csvwriter.writerow([self.meandirstats[i][0],
-                            #                        angle,
-                            #                        self.meandirstats[i][2]])
+                            for i in range(len(self.meandirstats)):
+                                if (self.directionneutral and
+                                         self.meandirstats[i][1] is not None):
+                                    angle = ((self.meandirstats[i][1] + 0.5) *
+                                             180.0 / self.bins +
+                                             self.offsetangle)
+                                else:
+                                    angle = self.meandirstats[i][1]
+                                csvwriter.writerow([self.meandirstats[i][0],
+                                                    angle,
+                                                    self.meandirstats[i][2]])
 
                             with open(self.outputfilename + 't', 'wb') as csvtfile:
                                 csvtfile.write('"Integer","Real","Real"')
