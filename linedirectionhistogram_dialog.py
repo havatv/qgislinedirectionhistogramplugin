@@ -434,27 +434,44 @@ class linedirectionhistogramDialog(QDialog, FORM_CLASS):
                 self.result = ret[0]
             # Shall the result be reported (as a CSV file):
             if self.outputfilename != "":
+                # Get the mean direction and strength for the tiles
+                if self.directionneutral:
+                    (maxbin, strength) = self.semiCircMean()
+                    angledeg = (maxbin + 0.5) * 180.0 / self.bins + self.offsetangle
+                    if angledeg >= 180:
+                       angledeg = angledeg - 180
+                    if strength == 0:
+                        angledeg = 0
+                else:
+                    (xvalue, yvalue) = self.circMean()
+                    anglerad = math.atan2(xvalue, yvalue)
+                    angledeg = math.degrees(anglerad)
+                    if angledeg < 0:
+                        angledeg = angledeg + 360
+                    strength = math.sqrt(xvalue*xvalue + yvalue*yvalue)
                 try:
                     with open(self.outputfilename, 'w') as csvfile:
                         csvwriter = csv.writer(csvfile, delimiter=';',
                                     quotechar='"', quoting=csv.QUOTE_MINIMAL)
                         csvwriter.writerow(["StartAngle", "EndAngle",
-                                            "Length", "Number"])
+                                            "Length", "Number", "Meandir", "Strength"])
                         for i in range(len(ret[0])):
                             if self.directionneutral:
                                 angle = (i * 180.0 / self.bins +
                                                 self.offsetangle)
                                 csvwriter.writerow([angle,
                                                    angle + 180.0 / self.bins,
-                                                   ret[0][i][0], ret[0][i][1]])
+                                                   ret[0][i][0], ret[0][i][1],
+                                                   angledeg, strength])
                             else:
                                 angle = (i * 360.0 / self.bins +
                                                          self.offsetangle)
                                 csvwriter.writerow([angle,
                                                angle + 360.0 / self.bins,
-                                               ret[0][i][0], ret[0][i][1]])
+                                               ret[0][i][0], ret[0][i][1],
+                                               angledeg, strength])
                     with open(self.outputfilename + 't', 'w') as csvtfile:
-                        csvtfile.write('"Real","Real","Real","Integer"')
+                        csvtfile.write('"Real","Real","Real","Integer","Real","Real"')
                 except IOError as e:
                     self.showInfo("Trouble writing the CSV file: " + str(e))
             # Draw the histogram
